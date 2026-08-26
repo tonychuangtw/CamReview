@@ -59,7 +59,7 @@ function check(name, cond) {
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 
   /* 每一支 js/css 都要被 index.html 載到，否則就是靜默失效 */
-  ["js/dialog.js", "js/util.js", "js/versions.js", "js/api.js", "js/app.js", "css/style.css"]
+  ["js/dialog.js", "js/util.js", "js/pick.js", "js/versions.js", "js/api.js", "js/app.js", "css/style.css"]
     .forEach((f) => check("index.html 有載入 " + f, html.includes(f)));
 
   /* 快取戳：所有本站資源的 ?v= 必須一致，否則會出現半新半舊的混版 */
@@ -79,6 +79,68 @@ function check(name, cond) {
   check("versions.js 有版本條目", Array.isArray(win.APP_VERSIONS) && win.APP_VERSIONS.length >= 1);
   check("每條版本都有 v/date/items", win.APP_VERSIONS.every(
     (v) => v.v && v.date && Array.isArray(v.items) && v.items.length));
+}
+
+/* ---------- pick.js：題庫轉換與自訂題 ---------- */
+{
+  const P = require(path.join(__dirname, "..", "js", "pick.js"));
+
+  /* 四種 Part 的原始格式各不相同，轉出來都必須是 mc 或 gap */
+  const p1 = P.toItem("p1", { text: "I'm keen ___ films.", options: ["on", "in"], answer: 0, explanation: "keen on" });
+  check("part1 轉成選擇題", p1.kind === "mc" && p1.options.length === 2 && p1.answer === 0);
+
+  const p2 = P.toItem("p2", { text: "living here ___ ten years", answers: ["for"], explanation: "x" });
+  check("part2 轉成填空題", p2.kind === "gap" && p2.answers[0] === "for");
+
+  const p3 = P.toItem("p3", { text: "The ___ is planned.", stem: "OPEN", answers: ["opening"] });
+  check("part3 題幹要帶出提示字", p3.q.includes("OPEN"));
+
+  const p4 = P.toItem("p4", { original: "I haven't seen Tom.", keyword: "LAST", gapped: "The ___ was ages ago.", answers: ["last time I saw"] });
+  check("part4 帶出原句與關鍵字", p4.q.includes("LAST") && p4.q.includes("I haven't seen Tom."));
+
+  check("認不得的來源回 null", P.toItem("zzz", { text: "x" }) === null);
+  check("缺欄位回 null", P.toItem("p1", { text: "x" }) === null);
+
+  /* 閱讀：一篇文章攤平成多題，每題都要帶著文章 */
+  const rd = P.readingToItems({
+    text: "PASSAGE",
+    questions: [
+      { q: "Q1", options: ["a", "b"], answer: 1, explanation: "e1" },
+      { q: "Q2", options: ["c", "d"], answer: 0 }
+    ]
+  });
+  check("閱讀攤平成兩題", rd.length === 2);
+  check("每一題都帶著文章", rd.every((r) => r.passage === "PASSAGE"));
+
+  /* 抽題不可重複——同一份作業出現兩題一樣的，老師就不會再信任這個功能 */
+  const pool = [1, 2, 3, 4, 5];
+  const picked = P.sample(pool, 5, () => 0);           // 固定 rng 也要抽滿且不重複
+  check("抽題數量正確", picked.length === 5);
+  check("抽題不重複", new Set(picked).size === 5);
+  check("要求超過題庫數量時就給全部", P.sample([1, 2], 10, Math.random).length === 2);
+  check("抽題不會動到原始陣列", pool.length === 5);
+
+  /* 自訂題 */
+  const mc = P.buildCustom({ kind: "mc", q: "Pick one", options: ["a", "b", " ", "c"], answer: 1 });
+  check("自訂選擇題會過濾空選項", mc.options.length === 3);
+  check("自訂選擇題答案索引保留", mc.answer === 1);
+  check("答案索引超出範圍回 null", P.buildCustom({ kind: "mc", q: "x", options: ["a", "b"], answer: 9 }) === null);
+  check("選項不足回 null", P.buildCustom({ kind: "mc", q: "x", options: ["a"], answer: 0 }) === null);
+  check("沒有題幹回 null", P.buildCustom({ kind: "mc", q: "  ", options: ["a", "b"], answer: 0 }) === null);
+
+  const gap = P.buildCustom({ kind: "gap", q: "It was ___ cold.", answers: "so, such" });
+  check("自訂填空可以有多個答案", gap.answers.length === 2 && gap.answers[1] === "such");
+  check("全形逗號也能分隔答案", P.buildCustom({ kind: "gap", q: "x", answers: "a，b" }).answers.length === 2);
+  check("沒有答案回 null", P.buildCustom({ kind: "gap", q: "x", answers: " " }) === null);
+
+  const wr = P.buildCustom({ kind: "writing", prompt: "Write an email.", minWords: 140, maxWords: 190 });
+  check("自訂寫作題", wr.kind === "writing" && wr.minWords === 140);
+  check("寫作題沒有題目回 null", P.buildCustom({ kind: "writing", prompt: "" }) === null);
+
+  /* 字數（寫作題的下限提示） */
+  check("字數：空白回 0", P.countWords("   ") === 0);
+  check("字數：連續空白只算一次", P.countWords("a   b  c") === 3);
+  check("字數：換行也算分隔", P.countWords("a\nb") === 2);
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

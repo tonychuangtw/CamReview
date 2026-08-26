@@ -76,6 +76,19 @@
       });
     },
 
+    /* ---------- 學生：作業 ---------- */
+    myAssignments: function () {
+      return request("GET", "/api/cam/assignments", { token: studentToken() });
+    },
+    takeAssignment: function (aid) {
+      return request("GET", "/api/cam/assignments/" + aid + "/take", { token: studentToken() });
+    },
+    submitAssignment: function (aid, answers) {
+      return request("POST", "/api/cam/assignments/" + aid + "/submit", {
+        token: studentToken(), body: { answers: answers }
+      });
+    },
+
     getProgress: function () {
       return request("GET", "/api/cam/progress", { token: studentToken() });
     },
@@ -118,6 +131,20 @@
     },
     removeStudent: function (id, sid) {
       return request("DELETE", "/api/cam/classes/" + id + "/students/" + sid, { token: teacherToken() });
+    },
+
+    /* ---------- 老師：作業 ---------- */
+    listAssignments: function (id) {
+      return request("GET", "/api/cam/classes/" + id + "/assignments", { token: teacherToken() });
+    },
+    createAssignment: function (id, body) {
+      return request("POST", "/api/cam/classes/" + id + "/assignments", { token: teacherToken(), body: body });
+    },
+    getAssignment: function (aid) {
+      return request("GET", "/api/cam/assignments/" + aid, { token: teacherToken() });
+    },
+    deleteAssignment: function (aid) {
+      return request("DELETE", "/api/cam/assignments/" + aid, { token: teacherToken() });
     }
   };
 

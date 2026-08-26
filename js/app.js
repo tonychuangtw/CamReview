@@ -12,6 +12,13 @@
   var GOOGLE_CLIENT_ID = "481860179039-gb37qsdogd4vgnn2g5umh73jen02avj4.apps.googleusercontent.com";
 
   var U = window.CamUtil;
+  /* 快取戳：從自己的 <script src> 讀出來，之後動態載入題庫時沿用同一個戳記，
+     不必在 HTML 裡另外維護一份（維護兩份必定走鐘）。 */
+  var STAMP = (function () {
+    var src = document.currentScript ? document.currentScript.src : "";
+    var m = /[?&]v=(\w+)/.exec(src);
+    return m ? m[1] : "1";
+  })();
   function $(id) { return document.getElementById(id); }
   var esc = U.esc;
   function alertMsg(m) { if (window.UIDialog) UIDialog.alert(m); else window.alert(m); }
@@ -19,7 +26,8 @@
 
   /* ---------------- 檢視切換 ---------------- */
   var VIEWS = ["view-role", "view-student-login", "view-student-home",
-    "view-teacher-login", "view-teacher-home", "view-class", "view-versions"];
+    "view-teacher-login", "view-teacher-home", "view-class", "view-assign-build",
+    "view-assign-detail", "view-take", "view-result", "view-versions"];
   var current = "view-role";
   var beforeVersions = "view-role";
 
@@ -78,6 +86,38 @@
     });
   }
 
+  var STATUS_TEXT = {
+    "not-started": "Not started",
+    "in-progress": "In progress",
+    "submitted": "Submitted"
+  };
+
+  function loadStudentAssignments() {
+    var box = $("stu-assignments");
+    box.innerHTML = '<p class="hint">Loading…</p>';
+    API.myAssignments().then(function (data) {
+      if (!data.assignments.length) {
+        box.innerHTML = '<p class="hint">No assignments yet. They will appear here as soon as your teacher sets one.</p>';
+        return;
+      }
+      box.innerHTML = "";
+      data.assignments.forEach(function (a) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "class-row";
+        var right = a.status === "submitted"
+          ? (a.total ? a.score + " / " + a.total : "Submitted")
+          : STATUS_TEXT[a.status];
+        b.innerHTML = "<span>" + esc(a.title) + "</span>" +
+          '<span class="count">' + esc(right) + "</span>";
+        b.addEventListener("click", function () { startTake(a); });
+        box.appendChild(b);
+      });
+    }, function (e) {
+      box.innerHTML = '<p class="error-text">' + esc(e.message) + "</p>";
+    });
+  }
+
   function paintStudentHome() {
     var p = API.studentProfile();
     if (!p) return;
@@ -86,6 +126,7 @@
     $("stu-sync").textContent =
       "Signed in on this device. Use the same class code and seat number anywhere else and " +
       "you'll pick up exactly where you left off.";
+    loadStudentAssignments();
   }
 
   /* ---------------- 老師：Google 登入 ---------------- */
@@ -184,6 +225,7 @@
       $("cls-code").textContent = c.code;
       $("cls-locked").checked = !!c.locked;
       loadRoster();
+      loadAssignments();
       show("view-class");
     });
   }
@@ -242,6 +284,362 @@
     });
   }
 
+
+  /* ================= 學生：作答 ================= */
+  var take = { assignment: null, items: [], answers: [], timer: null, deadline: null };
+
+  function renderTakeItem(item, i) {
+    var card = document.createElement("div");
+    card.className = "card";
+    var head = "<p class=\"eyebrow\">Question " + (i + 1) + "</p>";
+
+    if (item.passage) {
+      head += '<details class="bulk"><summary>Read the passage</summary><p class="passage">' +
+        esc(item.passage) + "</p></details>";
+    }
+
+    if (item.kind === "mc") {
+      card.innerHTML = head + "<p>" + esc(item.q) + "</p>";
+      item.options.forEach(function (opt, oi) {
+        var lab = document.createElement("label");
+        lab.className = "check opt";
+        lab.innerHTML = '<input type="radio" name="q' + i + '" value="' + oi + '"> ' + esc(opt);
+        lab.querySelector("input").addEventListener("change", function () { take.answers[i] = oi; });
+        card.appendChild(lab);
+      });
+      return card;
+    }
+
+    if (item.kind === "gap") {
+      card.innerHTML = head + '<p class="pre">' + esc(item.q) + "</p>";
+      var inp = document.createElement("input");
+      inp.type = "text";
+      inp.maxLength = 200;
+      inp.placeholder = "Your answer";
+      inp.addEventListener("input", function () { take.answers[i] = inp.value; });
+      card.appendChild(inp);
+      return card;
+    }
+
+    /* writing */
+    var limit = item.minWords || item.maxWords
+      ? " (" + (item.minWords ? item.minWords + "–" : "up to ") + (item.maxWords || "") + " words)"
+      : "";
+    card.innerHTML = head + '<p class="pre">' + esc(item.prompt) + esc(limit) + "</p>";
+    var ta = document.createElement("textarea");
+    ta.rows = 10;
+    var counter = document.createElement("p");
+    counter.className = "hint";
+    counter.textContent = "0 words";
+    ta.addEventListener("input", function () {
+      take.answers[i] = ta.value;
+      var n = window.CamPick.countWords(ta.value);
+      counter.textContent = n + " word" + (n === 1 ? "" : "s") +
+        (item.minWords && n < item.minWords ? " — " + (item.minWords - n) + " to go" : "");
+    });
+    card.appendChild(ta);
+    card.appendChild(counter);
+    return card;
+  }
+
+  function stopTimer() {
+    if (take.timer) { clearInterval(take.timer); take.timer = null; }
+  }
+
+  /* 倒數以「後端回傳的剩餘秒數」為準，不看裝置時鐘——學生把手機時間調掉也沒有用。 */
+  function startTimer(remainingSec) {
+    var el = $("take-timer");
+    stopTimer();
+    if (remainingSec == null) { el.classList.add("hidden"); return; }
+    take.deadline = Date.now() + remainingSec * 1000;
+    el.classList.remove("hidden");
+    var tick = function () {
+      var left = Math.max(0, Math.round((take.deadline - Date.now()) / 1000));
+      var m = Math.floor(left / 60), sec = left % 60;
+      el.textContent = m + ":" + (sec < 10 ? "0" : "") + sec;
+      if (left <= 0) {
+        stopTimer();
+        alertMsg("Time is up — your answers are being submitted.");
+        submitTake(true);
+      }
+    };
+    tick();
+    take.timer = setInterval(tick, 1000);
+  }
+
+  function startTake(meta) {
+    $("take-error").classList.add("hidden");
+    API.takeAssignment(meta.id).then(function (data) {
+      take.assignment = data.assignment;
+      take.items = data.items;
+      take.answers = data.items.map(function () { return null; });
+      $("take-title").textContent = data.assignment.title;
+      $("take-meta").textContent = data.assignment.count + " question" +
+        (data.assignment.count === 1 ? "" : "s") +
+        (data.assignment.examMode ? " · exam mode: one attempt only" : "") +
+        (data.assignment.timeLimitMin ? " · " + data.assignment.timeLimitMin + " min" : "");
+      var box = $("take-items");
+      box.innerHTML = "";
+      data.items.forEach(function (item, i) { box.appendChild(renderTakeItem(item, i)); });
+      startTimer(data.remainingSec);
+      show("view-take");
+    }, function (e) {
+      alertMsg(e.message);
+      loadStudentAssignments();
+    });
+  }
+
+  function submitTake(auto) {
+    var btn = $("do-submit");
+    var err = $("take-error");
+    err.classList.add("hidden");
+
+    if (!auto) {
+      var blank = take.answers.filter(function (a) { return a === null || a === ""; }).length;
+      if (blank) {
+        confirmMsg(blank + " question" + (blank === 1 ? " is" : "s are") + " still blank. Submit anyway?", function () {
+          doSubmit();
+        });
+        return;
+      }
+    }
+    doSubmit();
+
+    function doSubmit() {
+      btn.disabled = true;
+      btn.textContent = "Submitting…";
+      API.submitAssignment(take.assignment.id, take.answers).then(function (res) {
+        stopTimer();
+        btn.disabled = false;
+        btn.textContent = "Submit";
+        showResult(res);
+      }, function (e) {
+        btn.disabled = false;
+        btn.textContent = "Submit";
+        err.textContent = e.message;
+        err.classList.remove("hidden");
+      });
+    }
+  }
+
+  function showResult(res) {
+    $("res-title").textContent = take.assignment.title;
+    $("res-score").textContent = res.total ? res.score + " / " + res.total : "—";
+    $("res-note").textContent = res.needsReview
+      ? "Your writing will be marked separately — the score above covers the auto-marked questions only."
+      : "All questions were marked automatically.";
+
+    var box = $("res-review");
+    box.innerHTML = "";
+    res.review.forEach(function (r, i) {
+      var card = document.createElement("div");
+      card.className = "card";
+      var mark = r.correct === true ? "✅" : (r.correct === false ? "❌" : "📝");
+      var given = r.kind === "mc"
+        ? (take.items[i].options[r.given] != null ? take.items[i].options[r.given] : "(blank)")
+        : (r.given || "(blank)");
+      var right = "";
+      if (r.correct === false) {
+        right = r.kind === "mc"
+          ? "<p>Correct answer: <strong>" + esc(take.items[i].options[r.answer]) + "</strong></p>"
+          : "<p>Correct answer: <strong>" + esc((r.answer || []).join(" / ")) + "</strong></p>";
+      }
+      card.innerHTML = '<p class="eyebrow">' + mark + " Question " + (i + 1) + "</p>" +
+        '<p class="pre">' + esc(take.items[i].q || take.items[i].prompt) + "</p>" +
+        "<p>Your answer: " + esc(given) + "</p>" + right +
+        (r.explanation ? '<p class="hint">' + esc(r.explanation) + "</p>" : "");
+      box.appendChild(card);
+    });
+    show("view-result");
+    loadStudentAssignments();
+  }
+
+  /* ================= 老師：作業 ================= */
+  var draft = { items: [] };
+
+  function loadAssignments() {
+    var box = $("assign-list");
+    box.innerHTML = '<p class="hint">載入中…</p>';
+    API.listAssignments(openId).then(function (data) {
+      if (!data.assignments.length) {
+        box.innerHTML = '<p class="hint">還沒有作業。</p>';
+        return;
+      }
+      box.innerHTML = "";
+      data.assignments.forEach(function (a) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "class-row";
+        b.innerHTML = "<span>" + esc(a.title) + "</span>" +
+          '<span class="count">' + a.submitted + " / " + a.students + " 已交</span>";
+        b.addEventListener("click", function () { openAssignment(a.id); });
+        box.appendChild(b);
+      });
+    }, function (e) {
+      box.innerHTML = '<p class="error-text">' + esc(e.message) + "</p>";
+    });
+  }
+
+  function itemSummary(item) {
+    if (item.kind === "mc") return "四選一 · " + item.q;
+    if (item.kind === "gap") return "填空 · " + item.q.replace(/\n/g, " ");
+    return "寫作 · " + item.prompt;
+  }
+
+  function paintDraft() {
+    var box = $("assign-items");
+    $("assign-count").textContent = "（" + draft.items.length + " 題）";
+    if (!draft.items.length) {
+      box.innerHTML = '<p class="hint">還沒有題目。從上面的題庫挑題，或自己出題。</p>';
+      return;
+    }
+    box.innerHTML = "";
+    draft.items.forEach(function (item, i) {
+      var row = document.createElement("div");
+      row.className = "roster-row";
+      row.innerHTML = '<span class="seat">' + (i + 1) + "</span><span>" +
+        esc(itemSummary(item).slice(0, 70)) + "</span>";
+      var rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "rm";
+      rm.textContent = "✕";
+      rm.title = "移除這一題";
+      rm.addEventListener("click", function () { draft.items.splice(i, 1); paintDraft(); });
+      row.appendChild(rm);
+      box.appendChild(row);
+    });
+  }
+
+  /* 題庫近 1 MB，只有老師要挑題時才載，學生端完全不會載到。 */
+  var bankLoading = null;
+  function ensureBank() {
+    if (window.FCE_BANK) return Promise.resolve(window.FCE_BANK);
+    if (bankLoading) return bankLoading;
+    bankLoading = new Promise(function (resolve, reject) {
+      var el = document.createElement("script");
+      el.src = "js/data/fce-bank.js?v=" + STAMP;
+      el.onload = function () { resolve(window.FCE_BANK); };
+      el.onerror = function () { reject(new Error("題庫載入失敗，請檢查網路後重試。")); };
+      document.body.appendChild(el);
+    });
+    return bankLoading;
+  }
+
+  function bankPick() {
+    var note = $("bank-note");
+    var source = $("in-bank-source").value;
+    var n = Math.max(1, Math.min(30, Number($("in-bank-count").value) || 5));
+    note.textContent = "載入題庫中…";
+    ensureBank().then(function (bank) {
+      var picked = window.CamPick.pick(bank, source, n);
+      if (!picked.length) {
+        note.textContent = "這個來源目前沒有可用的題目。";
+        return;
+      }
+      draft.items = draft.items.concat(picked);
+      paintDraft();
+      note.textContent = "已加入 " + picked.length + " 題。";
+    }, function (e) {
+      note.textContent = e.message;
+    });
+  }
+
+  function addCustomQuestion() {
+    var kind = $("in-q-kind").value;
+    var err = $("assign-error");
+    err.classList.add("hidden");
+    var form = { kind: kind, explanation: $("in-q-exp").value };
+    if (kind === "mc") {
+      form.q = $("in-q-text").value;
+      form.options = $("in-q-options").value.split(/\r?\n/);
+      form.answer = Number($("in-q-answer").value) - 1;      /* 老師輸入的是第幾個，程式要的是索引 */
+    } else if (kind === "gap") {
+      form.q = $("in-q-gaptext").value;
+      form.answers = $("in-q-answers").value;
+    } else {
+      form.prompt = $("in-q-prompt").value;
+      form.minWords = $("in-q-min").value;
+      form.maxWords = $("in-q-max").value;
+    }
+    var item = window.CamPick.buildCustom(form);
+    if (!item) {
+      err.textContent = "這一題還不完整：選擇題要有題目、至少兩個選項與正確的正解編號；填空要有題目與答案；寫作要有題目。";
+      err.classList.remove("hidden");
+      return;
+    }
+    draft.items.push(item);
+    paintDraft();
+    ["in-q-text", "in-q-options", "in-q-gaptext", "in-q-answers", "in-q-prompt", "in-q-exp"]
+      .forEach(function (id) { $(id).value = ""; });
+    $("in-q-answer").value = 1;
+  }
+
+  function saveAssignment() {
+    var err = $("assign-error");
+    err.classList.add("hidden");
+    var title = $("in-assign-title").value.trim();
+    if (!title) {
+      err.textContent = "請先填作業名稱。";
+      err.classList.remove("hidden");
+      return;
+    }
+    if (!draft.items.length) {
+      err.textContent = "至少要有一題。";
+      err.classList.remove("hidden");
+      return;
+    }
+    var dueRaw = $("in-assign-due").value;
+    var body = {
+      title: title,
+      items: draft.items,
+      dueAt: dueRaw ? new Date(dueRaw).getTime() : null,
+      timeLimitMin: Number($("in-assign-limit").value) || null,
+      examMode: $("in-assign-exam").checked
+    };
+    API.createAssignment(openId, body).then(function () {
+      draft.items = [];
+      ["in-assign-title", "in-assign-due", "in-assign-limit"].forEach(function (id) { $(id).value = ""; });
+      $("in-assign-exam").checked = false;
+      paintDraft();
+      loadAssignments();
+      show("view-class");
+    }, function (e) {
+      err.textContent = e.message;
+      err.classList.remove("hidden");
+    });
+  }
+
+  var openAssignId = null;
+
+  function openAssignment(aid) {
+    openAssignId = aid;
+    API.getAssignment(aid).then(function (data) {
+      var a = data.assignment;
+      $("ad-title").textContent = a.title;
+      $("ad-meta").textContent = a.count + " 題" +
+        (a.examMode ? " · 考試模式（只能作答一次）" : "") +
+        (a.timeLimitMin ? " · 限時 " + a.timeLimitMin + " 分鐘" : "") +
+        (a.dueAt ? " · 截止 " + U.fmtSeen(a.dueAt) : "");
+      var box = $("ad-students");
+      box.innerHTML = "";
+      if (!data.students.length) {
+        box.innerHTML = '<p class="hint">名冊還是空的。</p>';
+      }
+      data.students.forEach(function (st) {
+        var row = document.createElement("div");
+        row.className = "roster-row";
+        var mark = st.status === "submitted" ? "✅" : (st.status === "in-progress" ? "✏️" : "—");
+        var right = st.status === "submitted"
+          ? (st.total ? st.score + " / " + st.total : "已交")
+          : (st.status === "in-progress" ? "作答中" : "未開始");
+        row.innerHTML = '<span class="seat">' + esc(st.seatNo) + "</span><span>" + esc(st.name) +
+          "</span><span class=\"seen\">" + mark + " " + esc(right) + "</span>";
+        box.appendChild(row);
+      });
+      show("view-assign-detail");
+    }, function (e) { alertMsg(e.message); });
+  }
+
   /* ---------------- 版本紀錄 ---------------- */
   function paintVersions() {
     var box = $("versions");
@@ -256,6 +654,7 @@
   function goto(target) {
     if (target === "role") { show("view-role"); return; }
     if (target === "student") {
+      stopTimer();
       if (API.isStudent()) { paintStudentHome(); show("view-student-home"); }
       else show("view-student-login");
       return;
@@ -266,6 +665,7 @@
       return;
     }
     if (target === "teacher-home") { loadClasses(); show("view-teacher-home"); return; }
+    if (target === "class") { stopTimer(); if (openId) openClass(openId); else goto("teacher-home"); return; }
     if (target === "back") { show(beforeVersions); return; }
   }
 
@@ -289,6 +689,39 @@
     $("logout").addEventListener("click", logout);
     $("brand").addEventListener("click", function () { goto(API.isStudent() ? "student" : (API.isTeacher() ? "teacher" : "role")); });
     $("show-versions").addEventListener("click", function () { paintVersions(); show("view-versions"); });
+
+    /* 題庫來源下拉：內容由 pick.js 定義，兩邊才不會走鐘 */
+    var srcSel = $("in-bank-source");
+    window.CamPick.SOURCES.forEach(function (s2) {
+      var o = document.createElement("option");
+      o.value = s2.key;
+      o.textContent = s2.label;
+      srcSel.appendChild(o);
+    });
+
+    $("do-new-assign").addEventListener("click", function () {
+      draft.items = [];
+      paintDraft();
+      show("view-assign-build");
+    });
+    $("do-bank-pick").addEventListener("click", bankPick);
+    $("do-add-q").addEventListener("click", addCustomQuestion);
+    $("do-save-assign").addEventListener("click", saveAssignment);
+    $("in-q-kind").addEventListener("change", function () {
+      var k = $("in-q-kind").value;
+      ["mc", "gap", "writing"].forEach(function (x) {
+        $("q-form-" + x).classList.toggle("hidden", x !== k);
+      });
+    });
+    $("do-delete-assign").addEventListener("click", function () {
+      confirmMsg("確定要刪除這份作業嗎？學生的作答紀錄也會一起刪除。", function () {
+        API.deleteAssignment(openAssignId).then(function () {
+          loadAssignments();
+          show("view-class");
+        }, function (e) { alertMsg(e.message); });
+      });
+    });
+    $("do-submit").addEventListener("click", function () { submitTake(false); });
 
     $("cls-locked").addEventListener("change", function () {
       API.updateClass(openId, { locked: $("cls-locked").checked }).then(null, function (e) {

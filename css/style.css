@@ -231,3 +231,40 @@ textarea,
 .ver { border-left: 2px solid var(--border-strong); padding-left: 12px; margin: 14px 0; }
 .ver h4 { margin: 0 0 4px; color: var(--accent); font-size: 0.95rem; }
 .ver ul { margin: 0; padding-left: 1.1em; color: var(--text2); font-size: 0.9rem; }
+
+/* ---------- 作答 ---------- */
+.q-form { margin-top: 6px; }
+.check.opt {
+  align-items: flex-start;
+  padding: 8px 10px;
+  margin: 6px 0;
+  background: var(--surface-hi);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  color: var(--text);
+  cursor: pointer;
+}
+.check.opt:hover { border-color: var(--accent); }
+.check.opt input { margin-top: 3px; }
+
+/* 題幹常帶換行（Part 4 的原句／關鍵字／改寫句各一行），要保留 */
+.pre { white-space: pre-wrap; }
+.passage {
+  white-space: pre-wrap;
+  color: var(--text2);
+  font-size: 0.92rem;
+  max-height: 40vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+#view-take textarea, #view-take input[type="text"] {
+  width: 100%;
+  margin-top: 8px;
+  padding: 11px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  color: var(--text);
+  font: inherit;
+}
+#take-timer { text-align: center; letter-spacing: 0.1em; }

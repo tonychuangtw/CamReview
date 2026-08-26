@@ -166,6 +166,73 @@ try {
   const teacherProbe = await js(`window.CamAPI.listClasses().then(function(){return 'ok';}, function(e){return 'blocked:' + e.status;})`);
   check('學生身分打不到老師端點', teacherProbe === 'blocked:401', String(teacherProbe));
 
+  console.log('\n作業：老師派題 → 學生作答 → 自動批改');
+  /* 老師派一份含三種題型的作業 */
+  const asg = await (await fetch(`http://127.0.0.1:${API_PORT}/api/cam/classes/${classId}/assignments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer devtok' },
+    body: JSON.stringify({
+      title: 'Unit 3 練習',
+      items: [
+        { kind: 'mc', q: 'She is keen ___ tennis.', options: ['on', 'in', 'at', 'for'], answer: 0, explanation: 'be keen on' },
+        { kind: 'gap', q: 'It was ___ cold that the lake froze.', answers: ['so'], explanation: 'so + adj + that' },
+        { kind: 'writing', prompt: 'Write an email about your weekend.', minWords: 20 }
+      ]
+    })
+  })).json();
+  check('老師建立作業成功', !!asg.assignment && asg.assignment.count === 3, JSON.stringify(asg).slice(0, 120));
+
+  await open();
+  await sleep(600);
+  check('學生首頁列出作業', /Unit 3 練習/.test(await js(`document.getElementById('stu-assignments').textContent`)),
+    await js(`document.getElementById('stu-assignments').textContent`));
+
+  await js(`document.querySelector('#stu-assignments button').click()`);
+  await sleep(900);
+  check('進入作答畫面', await js(`!document.getElementById('view-take').classList.contains('hidden')`));
+  check('三題都渲染出來', await js(`document.querySelectorAll('#take-items > .card').length === 3`));
+  check('選擇題畫出四個選項', await js(`document.querySelectorAll('#take-items input[type=radio]').length === 4`));
+
+  /* 網路上抓不到答案——這是「學生不能從開發者工具看答案」的實質驗證 */
+  const leaked = await js(`(function(){
+    var t = document.getElementById('take-items').textContent;
+    return t.indexOf('be keen on') >= 0 || t.indexOf('so + adj') >= 0;
+  })()`);
+  check('作答頁看不到解析', leaked === false);
+
+  /* 寫作題的字數會即時更新 */
+  await js(`(function(){
+    var ta = document.querySelector('#take-items textarea');
+    ta.value = 'one two three';
+    ta.dispatchEvent(new Event('input'));
+  })()`);
+  await sleep(200);
+  check('寫作題顯示字數', /3 words/.test(await js(`document.getElementById('take-items').textContent`)),
+    await js(`document.getElementById('take-items').textContent.slice(-120)`));
+
+  /* 作答：選擇題選第一個（正解）、填空故意打大寫加句點 */
+  await js(`(function(){
+    var r = document.querySelectorAll('#take-items input[type=radio]')[0];
+    r.checked = true; r.dispatchEvent(new Event('change'));
+    var inp = document.querySelector('#take-items input[type=text]');
+    inp.value = ' So. '; inp.dispatchEvent(new Event('input'));
+  })()`);
+  await js(`document.getElementById('do-submit').click()`);
+  await sleep(1200);
+  check('交卷後看到成績頁', await js(`!document.getElementById('view-result').classList.contains('hidden')`));
+  check('自動批改給 2 / 2', (await js(`document.getElementById('res-score').textContent`)) === '2 / 2',
+    await js(`document.getElementById('res-score').textContent`));
+  check('提醒寫作要另外批改', /marked separately/.test(await js(`document.getElementById('res-note').textContent`)));
+  check('交卷後才看得到解析', /be keen on/.test(await js(`document.getElementById('res-review').textContent`)));
+
+  /* 老師端立刻看得到成績 */
+  const detail = await (await fetch(`http://127.0.0.1:${API_PORT}/api/cam/assignments/${asg.assignment.id}`, {
+    headers: { Authorization: 'Bearer devtok' }
+  })).json();
+  const me = detail.students.find((s) => s.seatNo === '7');
+  check('老師端看得到該生已交', me && me.status === 'submitted');
+  check('老師端看得到分數', me && me.score === 2 && me.total === 2);
+
   console.log('\n老師端名冊');
   const roster = await (await fetch(`http://127.0.0.1:${API_PORT}/api/cam/classes/${classId}/students`, {
     headers: { Authorization: 'Bearer devtok' }

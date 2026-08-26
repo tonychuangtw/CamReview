@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CamReview — 劍橋英檢課堂版</title>
   <meta name="description" content="Cambridge exam practice for the classroom — teachers set assignments, students practise, progress syncs across devices.">
-  <link rel="stylesheet" href="css/style.css?v=20260826b">
+  <link rel="stylesheet" href="css/style.css?v=20260826d">
 </head>
 <body>
 
@@ -68,7 +68,7 @@
     </div>
     <div class="card">
       <h3>Assignments</h3>
-      <p class="hint">Your teacher hasn't set any assignments yet. They'll appear here as soon as they do.</p>
+      <div id="stu-assignments" class="class-list"></div>
     </div>
     <div class="card">
       <h3>Free practice</h3>
@@ -116,6 +116,12 @@
     </div>
 
     <div class="card">
+      <h3>作業</h3>
+      <div id="assign-list" class="class-list"></div>
+      <button id="do-new-assign" class="primary-btn small" type="button">＋ 新增作業</button>
+    </div>
+
+    <div class="card">
       <h3>名冊 <span id="cls-count" class="muted"></span></h3>
       <div id="roster" class="roster"></div>
       <details class="bulk">
@@ -131,6 +137,130 @@
       <button id="do-delete-class" class="danger-btn small" type="button">刪除這個班級</button>
       <p class="hint">會一併刪除名冊與學生的練習紀錄，無法復原。</p>
     </div>
+  </section>
+
+  <!-- ========== 老師：新增作業 ========== -->
+  <section id="view-assign-build" class="view hidden">
+    <div class="card">
+      <button class="ghost-btn small" type="button" data-go="class">← 回班級</button>
+      <h2>新增作業</h2>
+      <label class="field">作業名稱
+        <input id="in-assign-title" type="text" maxlength="100" placeholder="例：Unit 3 克漏字練習">
+      </label>
+      <label class="field">截止時間（選填）
+        <input id="in-assign-due" type="datetime-local">
+      </label>
+      <label class="field">限時幾分鐘（選填，留空表示不限時）
+        <input id="in-assign-limit" type="number" min="1" max="600" placeholder="例：30">
+      </label>
+      <label class="check">
+        <input id="in-assign-exam" type="checkbox">
+        考試模式（只能作答一次，交卷後不能重做）
+      </label>
+    </div>
+
+    <div class="card">
+      <h3>從題庫挑題</h3>
+      <div class="row-form">
+        <select id="in-bank-source"></select>
+        <input id="in-bank-count" type="number" min="1" max="30" value="5" style="max-width:5em">
+        <button id="do-bank-pick" class="primary-btn small" type="button">加入</button>
+      </div>
+      <p id="bank-note" class="hint">題庫與 LanExamMock 共用；第一次點「加入」時才會載入（約 1 MB）。</p>
+    </div>
+
+    <div class="card">
+      <h3>自己出題</h3>
+      <div class="row-form">
+        <select id="in-q-kind">
+          <option value="mc">四選一</option>
+          <option value="gap">填空</option>
+          <option value="writing">寫作</option>
+        </select>
+      </div>
+      <div id="q-form-mc" class="q-form">
+        <label class="field">題目
+          <input id="in-q-text" type="text" maxlength="500" placeholder="She is keen ___ tennis.">
+        </label>
+        <label class="field">選項（一行一個，第一行預設為正解）
+          <textarea id="in-q-options" rows="4" placeholder="on&#10;in&#10;at&#10;for"></textarea>
+        </label>
+        <label class="field">正解是第幾個選項
+          <input id="in-q-answer" type="number" min="1" max="6" value="1">
+        </label>
+      </div>
+      <div id="q-form-gap" class="q-form hidden">
+        <label class="field">題目（用 ___ 代表空格）
+          <input id="in-q-gaptext" type="text" maxlength="500" placeholder="It was ___ cold that the lake froze.">
+        </label>
+        <label class="field">可接受的答案（用逗號分隔多種寫法）
+          <input id="in-q-answers" type="text" maxlength="300" placeholder="so">
+        </label>
+      </div>
+      <div id="q-form-writing" class="q-form hidden">
+        <label class="field">寫作題目
+          <textarea id="in-q-prompt" rows="4" maxlength="2000" placeholder="Write an email to a friend describing your weekend."></textarea>
+        </label>
+        <div class="row-form">
+          <input id="in-q-min" type="number" min="0" placeholder="最少字數（如 140）">
+          <input id="in-q-max" type="number" min="0" placeholder="最多字數（如 190）">
+        </div>
+      </div>
+      <label class="field">解析（選填，學生交卷後才看得到）
+        <input id="in-q-exp" type="text" maxlength="500">
+      </label>
+      <button id="do-add-q" class="primary-btn small" type="button">加入這一題</button>
+    </div>
+
+    <div class="card">
+      <h3>這份作業的題目 <span id="assign-count" class="muted">（0 題）</span></h3>
+      <div id="assign-items" class="roster"></div>
+      <p id="assign-error" class="error-text hidden"></p>
+      <button id="do-save-assign" class="primary-btn" type="button">派給全班</button>
+    </div>
+  </section>
+
+  <!-- ========== 老師：單一作業 ========== -->
+  <section id="view-assign-detail" class="view hidden">
+    <div class="card">
+      <button class="ghost-btn small" type="button" data-go="class">← 回班級</button>
+      <h2 id="ad-title"></h2>
+      <p class="hint" id="ad-meta"></p>
+    </div>
+    <div class="card">
+      <h3>全班狀況</h3>
+      <div id="ad-students" class="roster"></div>
+    </div>
+    <div class="card danger-zone">
+      <button id="do-delete-assign" class="danger-btn small" type="button">刪除這份作業</button>
+      <p class="hint">學生的作答紀錄也會一起刪除。</p>
+    </div>
+  </section>
+
+  <!-- ========== 學生：作答 ========== -->
+  <section id="view-take" class="view hidden">
+    <div class="card">
+      <h2 id="take-title"></h2>
+      <p class="hint" id="take-meta"></p>
+      <p id="take-timer" class="code-big hidden"></p>
+    </div>
+    <div id="take-items"></div>
+    <div class="card">
+      <p id="take-error" class="error-text hidden"></p>
+      <button id="do-submit" class="primary-btn" type="button">Submit</button>
+      <button class="ghost-btn small" type="button" data-go="student">← Back</button>
+    </div>
+  </section>
+
+  <!-- ========== 學生：成績 ========== -->
+  <section id="view-result" class="view hidden">
+    <div class="card">
+      <h2 id="res-title"></h2>
+      <p class="code-big" id="res-score"></p>
+      <p class="hint" id="res-note"></p>
+      <button class="ghost-btn small" type="button" data-go="student">← Back to assignments</button>
+    </div>
+    <div id="res-review"></div>
   </section>
 
 </main>
@@ -160,10 +290,11 @@
   </div>
 </section>
 
-<script src="js/dialog.js?v=20260826b"></script>
-<script src="js/util.js?v=20260826b"></script>
-<script src="js/versions.js?v=20260826b"></script>
-<script src="js/api.js?v=20260826b"></script>
-<script src="js/app.js?v=20260826b"></script>
+<script src="js/dialog.js?v=20260826d"></script>
+<script src="js/util.js?v=20260826d"></script>
+<script src="js/pick.js?v=20260826d"></script>
+<script src="js/versions.js?v=20260826d"></script>
+<script src="js/api.js?v=20260826d"></script>
+<script src="js/app.js?v=20260826d"></script>
 </body>
 </html>
