@@ -8,6 +8,7 @@ window.APP_VERSIONS = [
       "The Sign out confirmation now appears in the middle of the screen instead of at the very bottom of the page, where it was easy to miss.",
       "Setting an assignment: the question bank row no longer pushes the Add button off the right of the screen on a phone. Every row of controls now wraps neatly instead.",
       "Layout: every page has been checked at phone width, so nothing runs off the side and there is no more pinching and zooming to read a page.",
+      "Tapping A+ or A\u2212 quickly no longer zooms the whole page in. Two taps in quick succession were being read as Safari's double-tap-to-zoom gesture \u2014 and going from 100% to 175% takes eight taps, so it happened almost every time. Buttons now opt out of that gesture; pinch to zoom still works normally.",
       "If the page is zoomed in, a banner now says so and tells you to pinch to zoom back out. Safari keeps a zoomed page zoomed \u2014 reloading does not reset it \u2014 and the symptom (the right-hand side looks cut off) does not look like zoom at all.",
       "The \u2139\uFE0F page now shows which build your device is running, plus the screen width, zoom level and text size, so a problem report can say exactly what state the device was in.",
       "Typing in a box no longer zooms the whole page in on an iPhone. Every field you can type into is now at least 16px, which is the size Safari requires before it stops zooming in on you \u2014 and it never zoomed back out, which is why the right-hand side looked cut off."

@@ -401,6 +401,26 @@ try {
   check('捲動後標題列仍固定在最上方', st.y > 0 && Math.abs(st.top) <= 1, sticky);
   await js(`window.scrollTo(0, 0)`);
 
+  /* 所有可點的控制項都要 touch-action: manipulation。
+   * 沒有這個，iOS 會把連續兩下當成「點兩下放大」——A+ 從 100% 按到 175% 要按 8 下，
+   * 一定連著按，第二下整頁就被放大且不會還原（Tony 2026-08-26 回報）。 */
+  const ta = await js(`(function () {
+    var ids = ${JSON.stringify(VIEWS)};
+    ids.forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.remove('hidden'); });
+    document.getElementById('theme-sheet').classList.remove('hidden');
+    var bad = [];
+    document.querySelectorAll('button, a, select, input, textarea, summary').forEach(function (el) {
+      var t = getComputedStyle(el).touchAction;
+      if (t !== 'manipulation') bad.push((el.id || el.className || el.tagName) + '=' + t);
+    });
+    document.getElementById('theme-sheet').classList.add('hidden');
+    ids.forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+    return JSON.stringify(bad.slice(0, 5));
+  })()`);
+  check('可點的控制項都關掉了 double-tap 放大', JSON.parse(ta).length === 0, ta);
+  const taFs = await js(`getComputedStyle(document.getElementById('fs-plus')).touchAction`);
+  check('A+ / A− 特別確認一次', taFs === 'manipulation', String(taFs));
+
   /* 縮放提示：沒放大時不能出現，模擬放大後要出現並講出倍率 */
   const zw = await js(`(function () {
     var box = document.getElementById('zoom-warn');
