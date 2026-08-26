@@ -4,11 +4,27 @@
 
 STATUS: in-progress
 OBJECTIVE: 做一個 FCE 課堂站——老師建班級、派作業、看全班成績；學生用班級代碼登入練習，跨裝置同步
-NEXT_ACTION: 四批都完成，等 Tony 實際帶班後的回饋再調整。可以先做的加值項：聽力題型（需 TTS，可沿用 LanExamMock 剛做好的英/美口音切換）、學生的自由練習模式、老師端一鍵複製作業到另一個班
+NEXT_ACTION: 五批都完成（含 2026-08-26 Tony 追加的「介面全英文」與「老師自己出作文題」），等 Tony 實際帶班後的回饋再調整。可以先做的加值項：聽力題型（需 TTS，可沿用 LanExamMock 剛做好的英/美口音切換）、學生的自由練習模式、老師端一鍵複製作業到另一個班
 VALIDATION: node test/test.js 全綠；後端 node test/cam-test.js（在 claude-shared/projects/LanExamMock/backend）全綠；瀏覽器實測老師建班→學生登入→跨裝置看到同一份資料
 BLOCKERS: 無
 PATHS: ~/TelegramClaude/CamReview/（前端）、claude-shared/projects/LanExamMock/backend/cam.js（後端）
-UPDATED: 2026-08-26 13:30 台北
+UPDATED: 2026-08-27 13:05 台北
+
+## 2026-08-26 Tony 追加的兩項（已完成）
+
+1. **介面全部英文**（原話：「介面全部用英文就好，不要有中文. 他們是雙語班沒有問題的」）
+   —— index.html、app.js、pick.js、util.js、versions.js 裡所有使用者看得到的字串都改成英文，
+   包含錯誤訊息、確認對話框、CSV 的欄位標題與檔名。**程式註解維持中文**（那是給維護的人看的，不是介面）。
+   `test/test.js` 加了一道守門：把 HTML 註解與 JS 註解剝掉之後，這幾支檔案不可以再出現中日韓字元，
+   之後誰再塞中文進介面就會測試失敗。
+
+2. **老師自己出作文題** —— 這個功能其實 v2 就有（出題下拉選 Writing task，填題目＋字數範圍），
+   Tony 會提出來多半是不夠明顯。這次補上 `CamPick.WRITING_TEMPLATES`：essay／email／article／review
+   四個 B2 First 現成題型，在寫作表單上方一排按鈕，按一下把題目與 140–190 字填進去，老師再改。
+   另外修掉一個小坑：加入題目後沒有清空字數欄，下一題會沿用上一題的字數。
+
+⚠️ 這一站的 repo 沒有設定 git 使用者，第一次 commit 會被 `Author identity unknown` 擋下來。
+已經在 repo 內設好 `tonychuangtw / tonychuangtw@gmail.com`，之後不會再遇到。
 
 ## 已完成
 
