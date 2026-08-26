@@ -116,6 +116,15 @@
       });
     },
 
+    /* 老師識別碼。Google 登入只證明「你是誰」，識別碼才決定「你是不是老師」——
+     * 擋在後端，前端這兩支只是把狀態問出來、把碼送過去。 */
+    teacherMe: function () {
+      return request("GET", "/api/cam/teacher/me", { token: teacherToken() });
+    },
+    activateTeacher: function (code) {
+      return request("POST", "/api/cam/teacher/activate", { token: teacherToken(), body: { code: code } });
+    },
+
     listClasses: function () {
       return request("GET", "/api/cam/classes", { token: teacherToken() });
     },

@@ -1,8 +1,11 @@
 /* ============================================================
    CamReview — 課堂版，行動優先
-   單一主題（墨黑＋琥珀），色票沿用 LanExamMock 的 ink 主題，
-   讓兩個站看起來是同一家人。
+   色系主題與 LanExamMock 共用同一組 CSS 變數名稱與色票，
+   讓兩個站看起來是同一家人。預設 ink（墨黑），
+   其餘由 [data-theme="..."] 覆寫（2026-08-26 Tony 要求可換色）。
    ============================================================ */
+
+/* ---------- 墨黑 ink (default) — near-black + warm amber ---------- */
 :root {
   --bg: #0d0d10;
   --surface: #17171c;
@@ -17,20 +20,149 @@
   --accent-soft: rgba(224, 164, 88, 0.14);
   --accent-contrast: #211302;
   --green: #4ade80;
+  --green-soft: rgba(74, 222, 128, 0.12);
   --red: #f87171;
   --red-soft: rgba(248, 113, 113, 0.12);
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-2: 0 6px 24px rgba(0, 0, 0, 0.45);
+  --header-bg: rgba(13, 13, 16, 0.82);
+
   --radius-s: 9px;
   --radius: 14px;
+  --radius-l: 20px;
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
     "PingFang TC", "Microsoft JhengHei", "Helvetica Neue", Arial, sans-serif;
 }
 
-* { box-sizing: border-box; }
+/* ---------- 深海藍 navy — deep navy + gold ---------- */
+[data-theme="navy"] {
+  --bg: #0a1220;
+  --surface: #101c2f;
+  --surface-hi: #142238;
+  --surface2: #182740;
+  --border: #243550;
+  --border-strong: #31456a;
+  --text: #e9eef7;
+  --text2: #b4c0d6;
+  --muted: #8496b4;
+  --accent: #d6b25e;
+  --accent-soft: rgba(214, 178, 94, 0.14);
+  --accent-contrast: #1d1402;
+  --green: #38d399;
+  --green-soft: rgba(56, 211, 153, 0.12);
+  --red: #f4788a;
+  --red-soft: rgba(244, 120, 138, 0.12);
+  --shadow-1: 0 1px 2px rgba(2, 8, 20, 0.4);
+  --shadow-2: 0 6px 24px rgba(2, 8, 20, 0.5);
+  --header-bg: rgba(10, 18, 32, 0.82);
+}
+
+/* ---------- 森林綠 forest — dark green + cream ---------- */
+[data-theme="forest"] {
+  --bg: #0c1410;
+  --surface: #131f18;
+  --surface-hi: #17251d;
+  --surface2: #1b2b21;
+  --border: #293e31;
+  --border-strong: #37503f;
+  --text: #ecf0e8;
+  --text2: #bcc8b8;
+  --muted: #8ba08c;
+  --accent: #d8c69a;
+  --accent-soft: rgba(216, 198, 154, 0.13);
+  --accent-contrast: #1c1706;
+  --green: #6fcf8f;
+  --green-soft: rgba(111, 207, 143, 0.12);
+  --red: #ef8072;
+  --red-soft: rgba(239, 128, 114, 0.12);
+  --shadow-1: 0 1px 2px rgba(2, 10, 5, 0.4);
+  --shadow-2: 0 6px 24px rgba(2, 10, 5, 0.5);
+  --header-bg: rgba(12, 20, 16, 0.82);
+}
+
+/* ---------- 暖米白 paper — warm paper + ink (light) ---------- */
+[data-theme="paper"] {
+  --bg: #f4efe4;
+  --surface: #fdfaf2;
+  --surface-hi: #fffdf8;
+  --surface2: #ede6d5;
+  --border: #d9cfb8;
+  --border-strong: #c4b797;
+  --text: #2a251d;
+  --text2: #514a3c;
+  --muted: #746b58;
+  --accent: #8a5a26;
+  --accent-soft: rgba(138, 90, 38, 0.1);
+  --accent-contrast: #fffaf0;
+  --green: #1e7e46;
+  --green-soft: rgba(30, 126, 70, 0.1);
+  --red: #b23140;
+  --red-soft: rgba(178, 49, 64, 0.09);
+  --shadow-1: 0 1px 2px rgba(90, 74, 40, 0.1);
+  --shadow-2: 0 6px 20px rgba(90, 74, 40, 0.16);
+  --header-bg: rgba(244, 239, 228, 0.85);
+}
+
+/* ---------- 玫瑰紫 plum — dark plum + rose ---------- */
+[data-theme="plum"] {
+  --bg: #16101a;
+  --surface: #201826;
+  --surface-hi: #261d2e;
+  --surface2: #2b2133;
+  --border: #3c2f47;
+  --border-strong: #4d3d5b;
+  --text: #f0eaf3;
+  --text2: #c8bcd0;
+  --muted: #a091ad;
+  --accent: #e08ba1;
+  --accent-soft: rgba(224, 139, 161, 0.13);
+  --accent-contrast: #2b0d15;
+  --green: #57d19b;
+  --green-soft: rgba(87, 209, 155, 0.12);
+  --red: #f2758d;
+  --red-soft: rgba(242, 117, 141, 0.12);
+  --shadow-1: 0 1px 2px rgba(8, 3, 12, 0.4);
+  --shadow-2: 0 6px 24px rgba(8, 3, 12, 0.5);
+  --header-bg: rgba(22, 16, 26, 0.82);
+}
+
+/* ---------- 青瓷 celadon — graphite teal ---------- */
+[data-theme="celadon"] {
+  --bg: #0d1416;
+  --surface: #151f22;
+  --surface-hi: #19262a;
+  --surface2: #1e2b30;
+  --border: #2b3d43;
+  --border-strong: #395057;
+  --text: #e8eff0;
+  --text2: #b3c4c7;
+  --muted: #859ba0;
+  --accent: #62c4b8;
+  --accent-soft: rgba(98, 196, 184, 0.13);
+  --accent-contrast: #032019;
+  --green: #55d38e;
+  --green-soft: rgba(85, 211, 142, 0.12);
+  --red: #f07f7f;
+  --red-soft: rgba(240, 127, 127, 0.12);
+  --shadow-1: 0 1px 2px rgba(2, 8, 10, 0.4);
+  --shadow-2: 0 6px 24px rgba(2, 8, 10, 0.5);
+  --header-bg: rgba(13, 20, 22, 0.82);
+}
+
+/* ============================================================ */
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* 版面永遠不准橫向捲動：手機上只要有一處超出，整頁就要左右拖。
+   一定要用 clip 不能用 hidden——hidden 會讓 <html> 變成捲動容器，
+   標題列的 position:sticky 就跟著失效（實測過，browser-smoke 有守門）。 */
+html { overflow-x: clip; }
 
 body {
   margin: 0;
+  overflow-x: clip;
+  /* 長網址、長單字、貼上的原文都可能撐破卡片 */
+  overflow-wrap: break-word;
+  word-break: break-word;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-ui);
@@ -50,7 +182,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  background: rgba(13, 13, 16, 0.9);
+  background: var(--header-bg);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
@@ -75,6 +207,8 @@ main { max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; }
 .lead { color: var(--text2); margin: 6px 0 0; }
 
 .card {
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -146,8 +280,33 @@ textarea,
 }
 #in-code { text-transform: uppercase; letter-spacing: 0.18em; font-weight: 600; }
 
-.row-form { display: flex; gap: 8px; align-items: center; margin-top: 14px; }
-.row-form input { margin-top: 0; }
+/* 橫排表單一律可換行，且每個欄位都要能被壓縮（min-width:0）。
+   少了這兩件事，手機上 select＋數字框＋按鈕會把按鈕擠出畫面右邊
+   ——就是 Tony 2026-08-26 回報的「Add 跑到頁面外面」。 */
+.row-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+}
+.row-form > * { min-width: 0; }
+.row-form input, .row-form select { margin-top: 0; flex: 1 1 8em; }
+.row-form button { flex: 0 0 auto; }
+/* 題庫來源的選單字很長，讓它自己佔滿一行，Add 那一排才排得整齊 */
+.row-form select.wide { flex: 1 1 100%; }
+.row-form input.narrow { flex: 0 1 6em; }
+
+select {
+  padding: 11px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  color: var(--text);
+  font: inherit;
+  max-width: 100%;
+}
+select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .check { display: flex; align-items: center; gap: 8px; color: var(--text2); font-size: 0.9rem; margin-top: 12px; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }
@@ -186,10 +345,12 @@ textarea,
 }
 .class-row:hover { border-color: var(--accent); }
 .class-row .code { color: var(--accent); font-weight: 700; letter-spacing: 0.12em; }
-.class-row .count { margin-left: auto; color: var(--muted); font-size: 0.85rem; }
+.class-row > span { min-width: 0; overflow-wrap: anywhere; }
+.class-row .count { margin-left: auto; flex: none; color: var(--muted); font-size: 0.85rem; }
 
 .code-big {
-  font-size: 2rem;
+  font-size: clamp(1.4rem, 8vw, 2rem);
+  overflow-wrap: anywhere;
   font-weight: 700;
   letter-spacing: 0.3em;
   color: var(--accent);
@@ -214,7 +375,8 @@ textarea,
   color: var(--accent);
   font-weight: 700;
 }
-.roster-row .seen { margin-left: auto; color: var(--muted); font-size: 0.8rem; }
+.roster-row > span { min-width: 0; overflow-wrap: anywhere; }
+.roster-row .seen { margin-left: auto; flex: none; color: var(--muted); font-size: 0.8rem; }
 .roster-row .rm { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 1rem; }
 .roster-row .rm:hover { color: var(--red); }
 
@@ -295,3 +457,102 @@ textarea,
   border-top: 1px solid var(--border);
 }
 .writing-mark .row-form input { margin-top: 0; }
+
+
+/* ---------- 對話框（dialog.js） ----------
+   2026-08-26 Tony 回報：按 Sign out 之後 OK 出現在頁面最下面。
+   原因是 dialog.js 產的 .dlg-* 從來沒有對應的樣式，overlay 變成一般區塊
+   接在 <main> 後面。這裡補上：固定滿版、置中、蓋在最上層。 */
+.dlg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+  animation: dlg-bd 0.15s ease both;
+}
+@keyframes dlg-bd { from { opacity: 0; } to { opacity: 1; } }
+.dlg-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+  padding: 20px;
+  animation: dlg-in 0.18s cubic-bezier(0.25, 0.8, 0.3, 1) both;
+}
+@keyframes dlg-in {
+  from { transform: translateY(12px) scale(0.97); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.dlg-msg {
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-bottom: 18px;
+}
+.dlg-btns { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.dlg-btns .primary-btn { width: auto; }
+
+/* ---------- 主題選擇（🎨） ---------- */
+.icon-btn {
+  flex: none;
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: transform 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.icon-btn:active { transform: scale(0.92); border-color: var(--accent); color: var(--accent); }
+
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0, 0, 0, 0.5);
+  animation: dlg-bd 0.2s ease both;
+}
+.theme-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 51;
+  background: var(--surface);
+  border: 1px solid var(--border); border-bottom: none;
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  padding: 16px 18px calc(18px + env(safe-area-inset-bottom));
+  max-width: 720px; margin: 0 auto;
+  max-height: 85vh; overflow-y: auto;
+  box-shadow: var(--shadow-2);
+  animation: sheet-in 0.28s cubic-bezier(0.25, 0.8, 0.3, 1) both;
+}
+@keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+.theme-sheet h3 { margin: 2px 0 12px; letter-spacing: 0.04em; }
+.theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.theme-swatch {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text2);
+  font-family: inherit;
+  font-size: 0.8rem;
+  padding: 12px 6px;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.15s ease;
+}
+.theme-swatch:active { transform: scale(0.95); }
+.theme-swatch.selected {
+  border-color: var(--accent); color: var(--text);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.theme-dot {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: var(--shadow-1);
+}
+.fs-row { display: flex; align-items: center; gap: 12px; }
+#fs-val { min-width: 52px; text-align: center; font-weight: 600; }

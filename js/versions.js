@@ -2,6 +2,15 @@
  * ⚠️ 這一頁的文字是給老師和學生看的，全部用英文（2026-08-26 Tony 定案：雙語班，介面不要中文）。 */
 window.APP_VERSIONS = [
   {
+    v: "v6", date: "2026-08-26", items: [
+      "Teacher code: signing in with Google is no longer enough to reach the teacher side. Each Google account has to enter the teacher code once before it can create classes or set assignments. Without it, a student could sign in as a teacher and set themselves the questions in advance.",
+      "Colours and text size: the \uD83C\uDFA8 button in the top bar offers six colour themes (Ink Black, Deep Navy, Forest Green, Warm Paper, Rose Plum, Celadon) and text size from 85% to 175%. Your choice is remembered on that device.",
+      "The Sign out confirmation now appears in the middle of the screen instead of at the very bottom of the page, where it was easy to miss.",
+      "Setting an assignment: the question bank row no longer pushes the Add button off the right of the screen on a phone. Every row of controls now wraps neatly instead.",
+      "Layout: every page has been checked at phone width, so nothing runs off the side and there is no more pinching and zooming to read a page."
+    ]
+  },
+  {
     v: "v5", date: "2026-08-26", items: [
       "The whole interface is now in English — every button, label, message and this page. Nothing on screen is in Chinese any more.",
       "Writing tasks got their own builder. Pick \"Writing task\" when you add a question, type your own prompt, and set a word range (for example 140–190). You can build an assignment that is nothing but writing, or mix writing in with multiple choice and gap fill.",
@@ -28,7 +37,7 @@ window.APP_VERSIONS = [
       "Auto-marking: multiple choice and gap fill are scored the moment a student submits. Gap fill ignores capitals, stray spaces and a trailing full stop, so nobody loses a mark over punctuation. Writing tasks are flagged for marking and left out of the automatic score.",
       "Exam mode and time limits: set a time limit and \"one attempt only\". The countdown follows the time the server reports, so changing the device clock does nothing, and the paper submits itself when time runs out.",
       "Answers stay hidden: the server strips the answer key and explanations before questions reach a student, and only sends them back after submission. Teachers see who has handed in and what they scored in real time.",
-      "The question bank shares a single source of truth with LanExamMock and only loads when a teacher picks questions, so students never download the extra 1 MB."
+      "The FCE question bank only loads when a teacher picks questions, so students never download the extra 1 MB."
     ]
   },
   {

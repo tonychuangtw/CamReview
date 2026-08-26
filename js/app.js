@@ -162,10 +162,63 @@
     $("gsi-note").textContent = "Signing in…";
     API.exchangeGoogleToken(resp.credential).then(function () {
       $("gsi-note").textContent = "";
+      enterTeacher();
+    }, function (e) {
+      $("gsi-note").textContent = "Sign-in failed: " + e.message;
+    });
+  }
+
+  /* Google 登入只證明身分，還要通過一次老師識別碼才進得了老師端。
+   * 沒有這一層，學生用自己的 Google 帳號就能建班、出作業給自己先刷題
+   * （Tony 2026-08-26 回報）。真正的關卡在後端，這裡只負責畫面。 */
+  function showCodeBox(email) {
+    show("view-teacher-login");
+    $("gsi-note").textContent = "";
+    $("tc-email").textContent = email || "";
+    $("tc-error").classList.add("hidden");
+    $("teacher-code-box").classList.remove("hidden");
+    $("in-teacher-code").value = "";
+    $("in-teacher-code").focus();
+  }
+
+  function hideCodeBox() {
+    $("teacher-code-box").classList.add("hidden");
+  }
+
+  /* 老師端的唯一入口：先問後端這個帳號過了沒。 */
+  function enterTeacher() {
+    if (!API.isTeacher()) { hideCodeBox(); show("view-teacher-login"); loadGSI(); return; }
+    API.teacherMe().then(function (data) {
+      if (data.approved) {
+        hideCodeBox();
+        loadClasses();
+        show("view-teacher-home");
+      } else {
+        showCodeBox(data.email);
+      }
+    }, function (e) {
+      if (e.status === 401) { API.teacherLogout(); hideCodeBox(); show("view-teacher-login"); loadGSI(); return; }
+      $("gsi-note").textContent = e.message;
+      show("view-teacher-login");
+    });
+  }
+
+  function submitTeacherCode() {
+    var code = $("in-teacher-code").value.trim();
+    var err = $("tc-error");
+    err.classList.add("hidden");
+    if (!code) { err.textContent = "Enter the teacher code."; err.classList.remove("hidden"); return; }
+    var btn = $("do-teacher-code");
+    btn.disabled = true;
+    API.activateTeacher(code).then(function () {
+      btn.disabled = false;
+      hideCodeBox();
       loadClasses();
       show("view-teacher-home");
     }, function (e) {
-      $("gsi-note").textContent = "Sign-in failed: " + e.message;
+      btn.disabled = false;
+      err.textContent = e.message;
+      err.classList.remove("hidden");
     });
   }
 
@@ -190,7 +243,8 @@
         box.appendChild(b);
       });
     }, function (e) {
-      if (e.status === 401) { API.teacherLogout(); show("view-teacher-login"); loadGSI(); return; }
+      if (e.status === 401) { API.teacherLogout(); hideCodeBox(); show("view-teacher-login"); loadGSI(); return; }
+      if (e.status === 403) { enterTeacher(); return; }
       box.innerHTML = '<p class="error-text">' + esc(e.message) + "</p>";
     });
   }
@@ -946,8 +1000,8 @@
       return;
     }
     if (target === "teacher") {
-      if (API.isTeacher()) { loadClasses(); show("view-teacher-home"); }
-      else { show("view-teacher-login"); loadGSI(); }
+      if (API.isTeacher()) { enterTeacher(); }
+      else { hideCodeBox(); show("view-teacher-login"); loadGSI(); }
       return;
     }
     if (target === "teacher-home") { loadClasses(); show("view-teacher-home"); return; }
@@ -956,10 +1010,88 @@
     if (target === "back") { show(beforeVersions); return; }
   }
 
+  /* ---------------- 色系主題與字級（Tony 2026-08-26 要求，比照 LanExamMock） ---------------- */
+  var K_THEME = "cam_theme", K_FS = "cam_fontsize";
+  var THEMES = [
+    { id: "ink",     name: "Ink Black",    bg: "#0d0d10", accent: "#e0a458" },
+    { id: "navy",    name: "Deep Navy",    bg: "#0a1220", accent: "#d6b25e" },
+    { id: "forest",  name: "Forest Green", bg: "#0c1410", accent: "#d8c69a" },
+    { id: "paper",   name: "Warm Paper",   bg: "#f4efe4", accent: "#8a5a26" },
+    { id: "plum",    name: "Rose Plum",    bg: "#16101a", accent: "#e08ba1" },
+    { id: "celadon", name: "Celadon",      bg: "#0d1416", accent: "#62c4b8" }
+  ];
+
+  function currentTheme() {
+    try { return localStorage.getItem(K_THEME) || "ink"; } catch (e) { return "ink"; }
+  }
+
+  function applyTheme(id) {
+    var t = null;
+    for (var i = 0; i < THEMES.length; i++) { if (THEMES[i].id === id) { t = THEMES[i]; break; } }
+    if (!t) t = THEMES[0];
+    /* ink 是 :root 的預設值，不掛 data-theme 屬性 */
+    if (t.id === "ink") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", t.id);
+    try { localStorage.setItem(K_THEME, t.id); } catch (e) {}
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", t.bg);
+  }
+
+  function currentFS() {
+    var n;
+    try { n = parseInt(localStorage.getItem(K_FS), 10); } catch (e) { n = NaN; }
+    return (n >= 85 && n <= 175) ? n : 100;
+  }
+
+  function applyFS(n) {
+    n = Math.max(85, Math.min(175, n));
+    document.documentElement.style.fontSize = n + "%";
+    try { localStorage.setItem(K_FS, String(n)); } catch (e) {}
+    $("fs-val").textContent = n + "%";
+  }
+
+  function initTheme() {
+    var btn = $("theme-btn"), sheet = $("theme-sheet"),
+        backdrop = $("theme-backdrop"), grid = $("theme-grid");
+    if (!btn || !sheet || !backdrop || !grid) return;
+
+    function close() { sheet.classList.add("hidden"); backdrop.classList.add("hidden"); }
+    function paint() {
+      grid.innerHTML = "";
+      var cur = currentTheme();
+      THEMES.forEach(function (t) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "theme-swatch" + (t.id === cur ? " selected" : "");
+        b.setAttribute("aria-label", t.name);
+        var dot = document.createElement("span");
+        dot.className = "theme-dot";
+        dot.style.background = "linear-gradient(135deg, " + t.bg + " 55%, " + t.accent + " 55%)";
+        b.appendChild(dot);
+        b.appendChild(document.createTextNode(t.name));
+        b.addEventListener("click", function () { applyTheme(t.id); paint(); });
+        grid.appendChild(b);
+      });
+    }
+    btn.addEventListener("click", function () {
+      paint();
+      sheet.classList.remove("hidden");
+      backdrop.classList.remove("hidden");
+    });
+    backdrop.addEventListener("click", close);
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+    $("fs-minus").addEventListener("click", function () { applyFS(currentFS() - 10); });
+    $("fs-plus").addEventListener("click", function () { applyFS(currentFS() + 10); });
+
+    applyTheme(currentTheme());
+    applyFS(currentFS());
+  }
+
   function logout() {
     confirmMsg("Sign out?", function () {
       API.studentLogout();
       API.teacherLogout();
+      hideCodeBox();
       show("view-role");
     });
   }
@@ -974,6 +1106,14 @@
     $("in-class-name").addEventListener("keydown", function (e) { if (e.key === "Enter") createClass(); });
     $("do-bulk").addEventListener("click", bulkImport);
     $("logout").addEventListener("click", logout);
+    $("do-teacher-code").addEventListener("click", submitTeacherCode);
+    $("in-teacher-code").addEventListener("keydown", function (e) { if (e.key === "Enter") submitTeacherCode(); });
+    $("do-teacher-signout").addEventListener("click", function () {
+      API.teacherLogout();
+      hideCodeBox();
+      show("view-role");
+    });
+    initTheme();
     $("brand").addEventListener("click", function () { goto(API.isStudent() ? "student" : (API.isTeacher() ? "teacher" : "role")); });
     $("show-versions").addEventListener("click", function () { paintVersions(); show("view-versions"); });
 
@@ -1055,8 +1195,7 @@
         }
       });
     } else if (API.isTeacher()) {
-      loadClasses();
-      show("view-teacher-home");
+      enterTeacher();
     } else {
       show("view-role");
     }

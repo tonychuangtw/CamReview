@@ -2,16 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0d10">
+  <script>
+  /* Apply the saved theme and text size before first paint, to avoid a flash of the default. */
+  (function () {
+    try {
+      var t = localStorage.getItem("cam_theme");
+      if (t && t !== "ink") document.documentElement.setAttribute("data-theme", t);
+      var bgs = { ink: "#0d0d10", navy: "#0a1220", forest: "#0c1410",
+                  paper: "#f4efe4", plum: "#16101a", celadon: "#0d1416" };
+      if (t && bgs[t]) {
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute("content", bgs[t]);
+      }
+      var fs = parseInt(localStorage.getItem("cam_fontsize"), 10);
+      if (fs && fs >= 85 && fs <= 175) document.documentElement.style.fontSize = fs + "%";
+    } catch (e) {}
+  })();
+  </script>
   <title>CamReview — Cambridge Practice for the Classroom</title>
   <meta name="description" content="Cambridge exam practice for the classroom — teachers set assignments, students practise, progress syncs across devices.">
-  <link rel="stylesheet" href="css/style.css?v=20260826g">
+  <link rel="stylesheet" href="css/style.css?v=20260826h">
 </head>
 <body>
 
 <header class="topbar">
   <button id="brand" class="brand" type="button">CamReview</button>
   <span id="who" class="who"></span>
+  <button id="theme-btn" class="icon-btn" type="button" aria-label="Choose theme" title="Colours &amp; text size">🎨</button>
   <button id="logout" class="ghost-btn small hidden" type="button">Sign out</button>
 </header>
 
@@ -84,6 +103,22 @@
       <p class="hint">Sign in with your Google account. You will only see the classes you create, and students never see your account details.</p>
       <div id="gsi-slot"></div>
       <p id="gsi-note" class="hint"></p>
+
+      <!-- Google 帳號通過後，第一次還要輸入老師識別碼；後端擋，前端只是介面。 -->
+      <div id="teacher-code-box" class="hidden">
+        <hr style="border:0;border-top:1px solid var(--border);margin:18px 0">
+        <h3>Teacher code</h3>
+        <p class="hint">Signed in as <strong id="tc-email"></strong>. One more step: enter the teacher
+          code to unlock the teacher side. You only need to do this once on each account.</p>
+        <label class="field">Teacher code
+          <input id="in-teacher-code" type="text" autocomplete="off" spellcheck="false" maxlength="64"
+                 placeholder="Ask the administrator for this">
+        </label>
+        <p id="tc-error" class="error-text hidden"></p>
+        <button id="do-teacher-code" class="primary-btn" type="button">Unlock</button>
+        <button id="do-teacher-signout" class="ghost-btn small" type="button">Use a different account</button>
+      </div>
+
       <button class="ghost-btn small" type="button" data-go="role">← Back</button>
     </div>
   </section>
@@ -165,17 +200,18 @@
     <div class="card">
       <h3>Pick from the question bank</h3>
       <div class="row-form">
-        <select id="in-bank-source"></select>
-        <input id="in-bank-count" type="number" min="1" max="30" value="5" style="max-width:5em">
+        <select id="in-bank-source" class="wide"></select>
+        <label class="muted" for="in-bank-count">How many</label>
+        <input id="in-bank-count" class="narrow" type="number" min="1" max="30" value="5">
         <button id="do-bank-pick" class="primary-btn small" type="button">Add</button>
       </div>
-      <p id="bank-note" class="hint">The bank is shared with LanExamMock. It loads the first time you press Add (about 1 MB).</p>
+      <p id="bank-note" class="hint">The bank loads the first time you press Add (about 1 MB), then stays ready.</p>
     </div>
 
     <div class="card">
       <h3>Write your own question</h3>
       <div class="row-form">
-        <select id="in-q-kind">
+        <select id="in-q-kind" class="wide">
           <option value="mc">Multiple choice</option>
           <option value="gap">Gap fill</option>
           <option value="writing">Writing task</option>
@@ -335,11 +371,23 @@
   </div>
 </section>
 
-<script src="js/dialog.js?v=20260826g"></script>
-<script src="js/util.js?v=20260826g"></script>
-<script src="js/pick.js?v=20260826g"></script>
-<script src="js/versions.js?v=20260826g"></script>
-<script src="js/api.js?v=20260826g"></script>
-<script src="js/app.js?v=20260826g"></script>
+<div id="theme-backdrop" class="sheet-backdrop hidden"></div>
+<div id="theme-sheet" class="theme-sheet hidden" role="dialog" aria-label="Choose theme">
+  <h3>Colours</h3>
+  <div id="theme-grid" class="theme-grid"></div>
+  <h3>Text size</h3>
+  <div class="fs-row">
+    <button id="fs-minus" class="ghost-btn small" type="button" aria-label="Smaller text">A−</button>
+    <span id="fs-val">100%</span>
+    <button id="fs-plus" class="ghost-btn small" type="button" aria-label="Larger text">A＋</button>
+  </div>
+</div>
+
+<script src="js/dialog.js?v=20260826h"></script>
+<script src="js/util.js?v=20260826h"></script>
+<script src="js/pick.js?v=20260826h"></script>
+<script src="js/versions.js?v=20260826h"></script>
+<script src="js/api.js?v=20260826h"></script>
+<script src="js/app.js?v=20260826h"></script>
 </body>
 </html>
