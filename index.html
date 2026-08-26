@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CamReview — 劍橋英檢課堂版</title>
+  <title>CamReview — Cambridge Practice for the Classroom</title>
   <meta name="description" content="Cambridge exam practice for the classroom — teachers set assignments, students practise, progress syncs across devices.">
-  <link rel="stylesheet" href="css/style.css?v=20260826f">
+  <link rel="stylesheet" href="css/style.css?v=20260826g">
 </head>
 <body>
 
 <header class="topbar">
   <button id="brand" class="brand" type="button">CamReview</button>
   <span id="who" class="who"></span>
-  <button id="logout" class="ghost-btn small hidden" type="button">登出</button>
+  <button id="logout" class="ghost-btn small hidden" type="button">Sign out</button>
 </header>
 
 <main id="main">
@@ -21,18 +21,18 @@
   <section id="view-role" class="view">
     <div class="hero">
       <h1>CamReview</h1>
-      <p class="lead">劍橋英檢課堂版 · B2 First (FCE)</p>
+      <p class="lead">Cambridge practice for the classroom · B2 First (FCE)</p>
     </div>
     <div class="role-grid">
       <button class="role-card" data-go="student">
         <span class="role-emoji">🎒</span>
-        <strong>我是學生</strong>
-        <span class="role-sub">用班級代碼、姓名與座號登入</span>
+        <strong>I am a student</strong>
+        <span class="role-sub">Sign in with your class code, name and seat number</span>
       </button>
       <button class="role-card" data-go="teacher">
         <span class="role-emoji">🧑‍🏫</span>
-        <strong>我是老師</strong>
-        <span class="role-sub">用 Google 帳號登入，管理班級與作業</span>
+        <strong>I am a teacher</strong>
+        <span class="role-sub">Sign in with Google to manage classes and assignments</span>
       </button>
     </div>
   </section>
@@ -55,7 +55,7 @@
       </label>
       <p id="login-error" class="error-text hidden"></p>
       <button id="do-login" class="primary-btn" type="button">Sign in</button>
-      <button class="ghost-btn small" type="button" data-go="role">← 回上一頁</button>
+      <button class="ghost-btn small" type="button" data-go="role">← Back</button>
     </div>
   </section>
 
@@ -80,22 +80,22 @@
   <!-- ========== 老師登入 ========== -->
   <section id="view-teacher-login" class="view hidden">
     <div class="card form-card">
-      <h2>老師登入</h2>
-      <p class="hint">用 Google 帳號登入。你只會看到自己建立的班級，學生看不到你的任何資料。</p>
+      <h2>Teacher sign-in</h2>
+      <p class="hint">Sign in with your Google account. You will only see the classes you create, and students never see your account details.</p>
       <div id="gsi-slot"></div>
       <p id="gsi-note" class="hint"></p>
-      <button class="ghost-btn small" type="button" data-go="role">← 回上一頁</button>
+      <button class="ghost-btn small" type="button" data-go="role">← Back</button>
     </div>
   </section>
 
   <!-- ========== 老師：班級列表 ========== -->
   <section id="view-teacher-home" class="view hidden">
     <div class="card">
-      <h2>我的班級</h2>
+      <h2>My classes</h2>
       <div id="class-list" class="class-list"></div>
       <div class="row-form">
-        <input id="in-class-name" type="text" maxlength="60" placeholder="班級名稱（例：高二 FCE 班）">
-        <button id="do-create-class" class="primary-btn small" type="button">建立班級</button>
+        <input id="in-class-name" type="text" maxlength="60" placeholder="Class name (e.g. Year 11 FCE)">
+        <button id="do-create-class" class="primary-btn small" type="button">Create class</button>
       </div>
       <p id="class-error" class="error-text hidden"></p>
     </div>
@@ -104,169 +104,171 @@
   <!-- ========== 老師：單一班級 ========== -->
   <section id="view-class" class="view hidden">
     <div class="card">
-      <button class="ghost-btn small" type="button" data-go="teacher-home">← 我的班級</button>
+      <button class="ghost-btn small" type="button" data-go="teacher-home">← My classes</button>
       <h2 id="cls-name"></h2>
-      <p class="eyebrow">班級代碼</p>
+      <p class="eyebrow">Class code</p>
       <p class="code-big" id="cls-code"></p>
-      <p class="hint">把這組代碼給學生，他們用「代碼＋姓名＋座號」就能登入，不需要帳號密碼。</p>
+      <p class="hint">Give this code to your class. Students sign in with the code, their name and their seat number — no password needed.</p>
       <label class="check">
         <input id="cls-locked" type="checkbox">
-        鎖定名冊（勾選後，只有名冊上已經有的座號能登入）
+        Lock the roster (only seat numbers already on the roster can sign in)
       </label>
     </div>
 
     <div class="card">
-      <h3>作業</h3>
+      <h3>Assignments</h3>
       <div id="assign-list" class="class-list"></div>
       <div class="row-form">
-        <button id="do-new-assign" class="primary-btn small" type="button">＋ 新增作業</button>
-        <button id="do-dashboard" class="ghost-btn small" type="button">📊 班級儀表板</button>
+        <button id="do-new-assign" class="primary-btn small" type="button">+ New assignment</button>
+        <button id="do-dashboard" class="ghost-btn small" type="button">📊 Class dashboard</button>
       </div>
     </div>
 
     <div class="card">
-      <h3>名冊 <span id="cls-count" class="muted"></span></h3>
+      <h3>Roster <span id="cls-count" class="muted"></span></h3>
       <div id="roster" class="roster"></div>
       <details class="bulk">
-        <summary>批次匯入名冊</summary>
-        <p class="hint">一行一位，格式「座號,姓名」。學生之後用同一個座號登入就會接上這一筆。</p>
-        <textarea id="in-bulk" rows="6" placeholder="1,王小明&#10;2,陳小華&#10;3,林小美"></textarea>
-        <button id="do-bulk" class="primary-btn small" type="button">匯入</button>
+        <summary>Bulk import roster</summary>
+        <p class="hint">One student per line, in the format "seat number, name". When a student signs in with that seat number, they are matched to this entry.</p>
+        <textarea id="in-bulk" rows="6" placeholder="1, Alex Chen&#10;2, Bella Wu&#10;3, Chris Lin"></textarea>
+        <button id="do-bulk" class="primary-btn small" type="button">Import</button>
       </details>
       <p id="roster-error" class="error-text hidden"></p>
     </div>
 
     <div class="card danger-zone">
-      <button id="do-delete-class" class="danger-btn small" type="button">刪除這個班級</button>
-      <p class="hint">會一併刪除名冊與學生的練習紀錄，無法復原。</p>
+      <button id="do-delete-class" class="danger-btn small" type="button">Delete this class</button>
+      <p class="hint">This also deletes the roster and every student record for this class. It cannot be undone.</p>
     </div>
   </section>
 
   <!-- ========== 老師：新增作業 ========== -->
   <section id="view-assign-build" class="view hidden">
     <div class="card">
-      <button class="ghost-btn small" type="button" data-go="class">← 回班級</button>
-      <h2>新增作業</h2>
-      <label class="field">作業名稱
-        <input id="in-assign-title" type="text" maxlength="100" placeholder="例：Unit 3 克漏字練習">
+      <button class="ghost-btn small" type="button" data-go="class">← Back to class</button>
+      <h2>New assignment</h2>
+      <label class="field">Assignment title
+        <input id="in-assign-title" type="text" maxlength="100" placeholder="e.g. Unit 3 — Open cloze">
       </label>
-      <label class="field">截止時間（選填）
+      <label class="field">Due date and time (optional)
         <input id="in-assign-due" type="datetime-local">
       </label>
-      <label class="field">限時幾分鐘（選填，留空表示不限時）
-        <input id="in-assign-limit" type="number" min="1" max="600" placeholder="例：30">
+      <label class="field">Time limit in minutes (optional — leave blank for no limit)
+        <input id="in-assign-limit" type="number" min="1" max="600" placeholder="e.g. 30">
       </label>
       <label class="check">
         <input id="in-assign-exam" type="checkbox">
-        考試模式（只能作答一次，交卷後不能重做）
+        Exam mode (one attempt only — no retries after submitting)
       </label>
     </div>
 
     <div class="card">
-      <h3>從題庫挑題</h3>
+      <h3>Pick from the question bank</h3>
       <div class="row-form">
         <select id="in-bank-source"></select>
         <input id="in-bank-count" type="number" min="1" max="30" value="5" style="max-width:5em">
-        <button id="do-bank-pick" class="primary-btn small" type="button">加入</button>
+        <button id="do-bank-pick" class="primary-btn small" type="button">Add</button>
       </div>
-      <p id="bank-note" class="hint">題庫與 LanExamMock 共用；第一次點「加入」時才會載入（約 1 MB）。</p>
+      <p id="bank-note" class="hint">The bank is shared with LanExamMock. It loads the first time you press Add (about 1 MB).</p>
     </div>
 
     <div class="card">
-      <h3>自己出題</h3>
+      <h3>Write your own question</h3>
       <div class="row-form">
         <select id="in-q-kind">
-          <option value="mc">四選一</option>
-          <option value="gap">填空</option>
-          <option value="writing">寫作</option>
+          <option value="mc">Multiple choice</option>
+          <option value="gap">Gap fill</option>
+          <option value="writing">Writing task</option>
         </select>
       </div>
       <div id="q-form-mc" class="q-form">
-        <label class="field">題目
+        <label class="field">Question
           <input id="in-q-text" type="text" maxlength="500" placeholder="She is keen ___ tennis.">
         </label>
-        <label class="field">選項（一行一個，第一行預設為正解）
+        <label class="field">Options (one per line)
           <textarea id="in-q-options" rows="4" placeholder="on&#10;in&#10;at&#10;for"></textarea>
         </label>
-        <label class="field">正解是第幾個選項
+        <label class="field">Which option is correct? (1 = first line)
           <input id="in-q-answer" type="number" min="1" max="6" value="1">
         </label>
       </div>
       <div id="q-form-gap" class="q-form hidden">
-        <label class="field">題目（用 ___ 代表空格）
+        <label class="field">Question (use ___ for the gap)
           <input id="in-q-gaptext" type="text" maxlength="500" placeholder="It was ___ cold that the lake froze.">
         </label>
-        <label class="field">可接受的答案（用逗號分隔多種寫法）
+        <label class="field">Accepted answers (separate alternatives with commas)
           <input id="in-q-answers" type="text" maxlength="300" placeholder="so">
         </label>
       </div>
       <div id="q-form-writing" class="q-form hidden">
-        <label class="field">寫作題目
+        <p class="hint">Type your own prompt, or start from a ready-made B2 First task and edit it.</p>
+        <div id="wt-row" class="row-form"></div>
+        <label class="field">Writing prompt
           <textarea id="in-q-prompt" rows="4" maxlength="2000" placeholder="Write an email to a friend describing your weekend."></textarea>
         </label>
         <div class="row-form">
-          <input id="in-q-min" type="number" min="0" placeholder="最少字數（如 140）">
-          <input id="in-q-max" type="number" min="0" placeholder="最多字數（如 190）">
+          <input id="in-q-min" type="number" min="0" placeholder="Min words (e.g. 140)">
+          <input id="in-q-max" type="number" min="0" placeholder="Max words (e.g. 190)">
         </div>
       </div>
-      <label class="field">解析（選填，學生交卷後才看得到）
+      <label class="field">Explanation (optional — students see it after they submit)
         <input id="in-q-exp" type="text" maxlength="500">
       </label>
-      <button id="do-add-q" class="primary-btn small" type="button">加入這一題</button>
+      <button id="do-add-q" class="primary-btn small" type="button">Add this question</button>
     </div>
 
     <div class="card">
-      <h3>這份作業的題目 <span id="assign-count" class="muted">（0 題）</span></h3>
+      <h3>Questions in this assignment <span id="assign-count" class="muted">(0)</span></h3>
       <div id="assign-items" class="roster"></div>
       <p id="assign-error" class="error-text hidden"></p>
-      <button id="do-save-assign" class="primary-btn" type="button">派給全班</button>
+      <button id="do-save-assign" class="primary-btn" type="button">Assign to the class</button>
     </div>
   </section>
 
   <!-- ========== 老師：單一作業 ========== -->
   <section id="view-assign-detail" class="view hidden">
     <div class="card">
-      <button class="ghost-btn small" type="button" data-go="class">← 回班級</button>
+      <button class="ghost-btn small" type="button" data-go="class">← Back to class</button>
       <h2 id="ad-title"></h2>
       <p class="hint" id="ad-meta"></p>
     </div>
     <div class="card">
-      <h3>全班狀況</h3>
+      <h3>Class progress</h3>
       <div id="ad-students" class="roster"></div>
     </div>
     <div class="card danger-zone">
-      <button id="do-delete-assign" class="danger-btn small" type="button">刪除這份作業</button>
-      <p class="hint">學生的作答紀錄也會一起刪除。</p>
+      <button id="do-delete-assign" class="danger-btn small" type="button">Delete this assignment</button>
+      <p class="hint">Student answers for this assignment are deleted too.</p>
     </div>
   </section>
 
   <!-- ========== 老師：班級儀表板 ========== -->
   <section id="view-dashboard" class="view hidden">
     <div class="card">
-      <button class="ghost-btn small" type="button" data-go="class">← 回班級</button>
-      <h2>班級儀表板</h2>
+      <button class="ghost-btn small" type="button" data-go="class">← Back to class</button>
+      <h2>Class dashboard</h2>
       <p class="hint" id="db-meta"></p>
-      <button id="do-csv" class="ghost-btn small" type="button">⬇️ 匯出成績 CSV</button>
+      <button id="do-csv" class="ghost-btn small" type="button">⬇️ Export scores (CSV)</button>
     </div>
 
     <div class="card">
-      <h3>全班</h3>
+      <h3>Students</h3>
       <div id="db-students" class="roster"></div>
     </div>
 
     <div class="card">
-      <h3>各份作業</h3>
+      <h3>By assignment</h3>
       <div id="db-assignments" class="roster"></div>
     </div>
 
     <div class="card">
-      <h3>各題型正確率</h3>
+      <h3>Accuracy by question type</h3>
       <div id="db-kinds"></div>
-      <p class="hint">只統計自動批改的題目（選擇與填空），寫作題不列入。</p>
+      <p class="hint">Auto-marked questions only (multiple choice and gap fill). Writing tasks are not included.</p>
     </div>
 
     <div class="card">
-      <h3>全班最容易錯的題目</h3>
+      <h3>Most-missed questions</h3>
       <div id="db-hardest" class="roster"></div>
     </div>
   </section>
@@ -274,7 +276,7 @@
   <!-- ========== 老師：單一學生 ========== -->
   <section id="view-student-work" class="view hidden">
     <div class="card">
-      <button class="ghost-btn small" type="button" data-go="dashboard">← 回儀表板</button>
+      <button class="ghost-btn small" type="button" data-go="dashboard">← Back to dashboard</button>
       <h2 id="sw-name"></h2>
     </div>
     <div id="sw-body"></div>
@@ -309,35 +311,35 @@
 </main>
 
 <footer class="footer">
-  <button id="show-versions" class="link-btn" type="button">ℹ️ 使用說明與版本紀錄</button>
+  <button id="show-versions" class="link-btn" type="button">ℹ️ How it works &amp; release notes</button>
 </footer>
 
 <section id="view-versions" class="view hidden">
   <div class="card">
-    <button class="ghost-btn small" type="button" data-go="back">← 返回</button>
-    <h2>使用說明</h2>
-    <h3>給老師</h3>
+    <button class="ghost-btn small" type="button" data-go="back">← Back</button>
+    <h2>How it works</h2>
+    <h3>For teachers</h3>
     <ol class="steps">
-      <li>用 Google 帳號登入，建立一個班級。</li>
-      <li>把系統產生的 <strong>6 碼班級代碼</strong>給全班。</li>
-      <li>學生用「代碼＋姓名＋座號」登入，名冊會自動長出來；也可以先批次匯入名冊。</li>
-      <li>名冊確定之後勾選「鎖定名冊」，就只有名冊上的座號能登入。</li>
+      <li>Sign in with Google and create a class.</li>
+      <li>Give the class the <strong>6-character class code</strong>.</li>
+      <li>Students sign in with the code, their name and their seat number. The roster fills in automatically, or you can bulk-import it first.</li>
+      <li>Once the roster is final, tick <strong>Lock the roster</strong> so only listed seat numbers can sign in.</li>
     </ol>
-    <h3>給學生</h3>
+    <h3>For students</h3>
     <ol class="steps">
-      <li>座號就是你的帳號 —— 換一台裝置只要輸入同一組代碼與座號，看到的東西完全一樣。</li>
-      <li>沒有密碼，所以請不要用別人的座號登入。</li>
+      <li>Your seat number is your account. Sign in with the same code and seat number on any device and you will see exactly the same work.</li>
+      <li>There is no password, so please never sign in with someone else's seat number.</li>
     </ol>
-    <h2>版本紀錄</h2>
+    <h2>Release notes</h2>
     <div id="versions"></div>
   </div>
 </section>
 
-<script src="js/dialog.js?v=20260826f"></script>
-<script src="js/util.js?v=20260826f"></script>
-<script src="js/pick.js?v=20260826f"></script>
-<script src="js/versions.js?v=20260826f"></script>
-<script src="js/api.js?v=20260826f"></script>
-<script src="js/app.js?v=20260826f"></script>
+<script src="js/dialog.js?v=20260826g"></script>
+<script src="js/util.js?v=20260826g"></script>
+<script src="js/pick.js?v=20260826g"></script>
+<script src="js/versions.js?v=20260826g"></script>
+<script src="js/api.js?v=20260826g"></script>
+<script src="js/app.js?v=20260826g"></script>
 </body>
 </html>

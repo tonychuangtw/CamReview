@@ -50,7 +50,7 @@
       who.textContent = p.klass.name + " · " + p.student.seatNo + " " + p.student.name;
       out.classList.remove("hidden");
     } else if (API.isTeacher()) {
-      who.textContent = "老師";
+      who.textContent = "Teacher";
       out.classList.remove("hidden");
     } else {
       who.textContent = "";
@@ -137,7 +137,7 @@
     if (gsiLoaded) return;
     gsiLoaded = true;
     var note = $("gsi-note");
-    note.textContent = "載入 Google 登入元件…";
+    note.textContent = "Loading Google sign-in…";
     var s = document.createElement("script");
     s.src = "https://accounts.google.com/gsi/client";
     s.async = true;
@@ -147,35 +147,35 @@
         google.accounts.id.renderButton($("gsi-slot"), { theme: "filled_black", size: "large", width: 260 });
         note.textContent = "";
       } catch (e) {
-        note.textContent = "Google 登入元件初始化失敗：" + e.message;
+        note.textContent = "Google sign-in failed to start: " + e.message;
       }
     };
     s.onerror = function () {
       gsiLoaded = false;
-      note.textContent = "連不上 Google 登入元件（通常是網路或擋廣告的擴充套件）。重新整理再試一次。";
+      note.textContent = "Could not reach Google sign-in — usually a network problem or an ad blocker. Refresh and try again.";
     };
     document.head.appendChild(s);
   }
 
   function onCredential(resp) {
     if (!resp || !resp.credential) return;
-    $("gsi-note").textContent = "登入中…";
+    $("gsi-note").textContent = "Signing in…";
     API.exchangeGoogleToken(resp.credential).then(function () {
       $("gsi-note").textContent = "";
       loadClasses();
       show("view-teacher-home");
     }, function (e) {
-      $("gsi-note").textContent = "登入失敗：" + e.message;
+      $("gsi-note").textContent = "Sign-in failed: " + e.message;
     });
   }
 
   /* ---------------- 老師：班級 ---------------- */
   function loadClasses() {
     var box = $("class-list");
-    box.innerHTML = '<p class="hint">載入中…</p>';
+    box.innerHTML = '<p class="hint">Loading…</p>';
     API.listClasses().then(function (data) {
       if (!data.classes.length) {
-        box.innerHTML = '<p class="hint">還沒有班級。在下面輸入名稱就能建立第一個班。</p>';
+        box.innerHTML = '<p class="hint">No classes yet. Type a name below to create your first one.</p>';
         return;
       }
       box.innerHTML = "";
@@ -185,7 +185,7 @@
         b.className = "class-row";
         b.innerHTML = '<span class="code">' + esc(c.code) + "</span>" +
           "<span>" + esc(c.name) + "</span>" +
-          '<span class="count">' + c.students + " 人</span>";
+          '<span class="count">' + c.students + (c.students === 1 ? " student" : " students") + "</span>";
         b.addEventListener("click", function () { openClass(c.id); });
         box.appendChild(b);
       });
@@ -200,7 +200,7 @@
     var err = $("class-error");
     err.classList.add("hidden");
     if (!name) {
-      err.textContent = "請先輸入班級名稱。";
+      err.textContent = "Please enter a class name first.";
       err.classList.remove("hidden");
       return;
     }
@@ -233,12 +233,12 @@
 
   function loadRoster() {
     var box = $("roster");
-    box.innerHTML = '<p class="hint">載入中…</p>';
+    box.innerHTML = '<p class="hint">Loading…</p>';
     API.listStudents(openId).then(function (data) {
-      $("cls-count").textContent = "（" + data.students.length + " 人）";
+      $("cls-count").textContent = "(" + data.students.length + (data.students.length === 1 ? " student" : " students") + ")";
       if (!data.students.length) {
-        box.innerHTML = '<p class="hint">名冊還是空的。學生用班級代碼登入後就會自動出現，' +
-          "你也可以先用下面的批次匯入建好。</p>";
+        box.innerHTML = '<p class="hint">The roster is empty. Students appear here as soon as they sign in ' +
+          "with the class code, or you can bulk-import the list below.</p>";
         return;
       }
       box.innerHTML = "";
@@ -252,9 +252,9 @@
         rm.type = "button";
         rm.className = "rm";
         rm.textContent = "✕";
-        rm.title = "從名冊移除";
+        rm.title = "Remove from roster";
         rm.addEventListener("click", function () {
-          confirmMsg("把「" + s.seatNo + " " + s.name + "」從名冊移除？他的練習紀錄也會一起刪除。", function () {
+          confirmMsg("Remove " + s.seatNo + " " + s.name + " from the roster? Their work is deleted too.", function () {
             API.removeStudent(openId, s.id).then(loadRoster, function (e) { alertMsg(e.message); });
           });
         });
@@ -271,13 +271,13 @@
     err.classList.add("hidden");
     var rows = U.parseBulk($("in-bulk").value);
     if (!rows.length) {
-      err.textContent = "看不出任何一行「座號,姓名」。請確認每一行都有逗號分隔。";
+      err.textContent = "No lines in the format \"seat number, name\" were found. Check that every line has a comma.";
       err.classList.remove("hidden");
       return;
     }
     API.addStudents(openId, rows).then(function (data) {
       $("in-bulk").value = "";
-      alertMsg("已匯入 " + data.added + " 位學生。");
+      alertMsg("Imported " + data.added + (data.added === 1 ? " student." : " students."));
       loadRoster();
     }, function (e) {
       err.textContent = e.message;
@@ -540,10 +540,10 @@
 
   function loadAssignments() {
     var box = $("assign-list");
-    box.innerHTML = '<p class="hint">載入中…</p>';
+    box.innerHTML = '<p class="hint">Loading…</p>';
     API.listAssignments(openId).then(function (data) {
       if (!data.assignments.length) {
-        box.innerHTML = '<p class="hint">還沒有作業。</p>';
+        box.innerHTML = '<p class="hint">No assignments yet.</p>';
         return;
       }
       box.innerHTML = "";
@@ -552,7 +552,7 @@
         b.type = "button";
         b.className = "class-row";
         b.innerHTML = "<span>" + esc(a.title) + "</span>" +
-          '<span class="count">' + a.submitted + " / " + a.students + " 已交</span>";
+          '<span class="count">' + a.submitted + " / " + a.students + " submitted</span>";
         b.addEventListener("click", function () { openAssignment(a.id); });
         box.appendChild(b);
       });
@@ -562,16 +562,16 @@
   }
 
   function itemSummary(item) {
-    if (item.kind === "mc") return "四選一 · " + item.q;
-    if (item.kind === "gap") return "填空 · " + item.q.replace(/\n/g, " ");
-    return "寫作 · " + item.prompt;
+    if (item.kind === "mc") return "Multiple choice · " + item.q;
+    if (item.kind === "gap") return "Gap fill · " + item.q.replace(/\n/g, " ");
+    return "Writing · " + item.prompt;
   }
 
   function paintDraft() {
     var box = $("assign-items");
-    $("assign-count").textContent = "（" + draft.items.length + " 題）";
+    $("assign-count").textContent = "(" + draft.items.length + ")";
     if (!draft.items.length) {
-      box.innerHTML = '<p class="hint">還沒有題目。從上面的題庫挑題，或自己出題。</p>';
+      box.innerHTML = '<p class="hint">No questions yet. Pick some from the bank above, or write your own.</p>';
       return;
     }
     box.innerHTML = "";
@@ -584,7 +584,7 @@
       rm.type = "button";
       rm.className = "rm";
       rm.textContent = "✕";
-      rm.title = "移除這一題";
+      rm.title = "Remove this question";
       rm.addEventListener("click", function () { draft.items.splice(i, 1); paintDraft(); });
       row.appendChild(rm);
       box.appendChild(row);
@@ -600,7 +600,7 @@
       var el = document.createElement("script");
       el.src = "js/data/fce-bank.js?v=" + STAMP;
       el.onload = function () { resolve(window.FCE_BANK); };
-      el.onerror = function () { reject(new Error("題庫載入失敗，請檢查網路後重試。")); };
+      el.onerror = function () { reject(new Error("The question bank failed to load. Check your connection and try again.")); };
       document.body.appendChild(el);
     });
     return bankLoading;
@@ -610,16 +610,16 @@
     var note = $("bank-note");
     var source = $("in-bank-source").value;
     var n = Math.max(1, Math.min(30, Number($("in-bank-count").value) || 5));
-    note.textContent = "載入題庫中…";
+    note.textContent = "Loading the question bank…";
     ensureBank().then(function (bank) {
       var picked = window.CamPick.pick(bank, source, n);
       if (!picked.length) {
-        note.textContent = "這個來源目前沒有可用的題目。";
+        note.textContent = "There are no questions available from this source.";
         return;
       }
       draft.items = draft.items.concat(picked);
       paintDraft();
-      note.textContent = "已加入 " + picked.length + " 題。";
+      note.textContent = "Added " + picked.length + (picked.length === 1 ? " question." : " questions.");
     }, function (e) {
       note.textContent = e.message;
     });
@@ -644,14 +644,14 @@
     }
     var item = window.CamPick.buildCustom(form);
     if (!item) {
-      err.textContent = "這一題還不完整：選擇題要有題目、至少兩個選項與正確的正解編號；填空要有題目與答案；寫作要有題目。";
+      err.textContent = "This question is incomplete. Multiple choice needs a question, at least two options and a valid answer number; gap fill needs a question and an answer; a writing task needs a prompt.";
       err.classList.remove("hidden");
       return;
     }
     draft.items.push(item);
     paintDraft();
-    ["in-q-text", "in-q-options", "in-q-gaptext", "in-q-answers", "in-q-prompt", "in-q-exp"]
-      .forEach(function (id) { $(id).value = ""; });
+    ["in-q-text", "in-q-options", "in-q-gaptext", "in-q-answers", "in-q-prompt", "in-q-exp",
+      "in-q-min", "in-q-max"].forEach(function (id) { $(id).value = ""; });
     $("in-q-answer").value = 1;
   }
 
@@ -660,12 +660,12 @@
     err.classList.add("hidden");
     var title = $("in-assign-title").value.trim();
     if (!title) {
-      err.textContent = "請先填作業名稱。";
+      err.textContent = "Please give the assignment a title.";
       err.classList.remove("hidden");
       return;
     }
     if (!draft.items.length) {
-      err.textContent = "至少要有一題。";
+      err.textContent = "Add at least one question.";
       err.classList.remove("hidden");
       return;
     }
@@ -697,22 +697,22 @@
     API.getAssignment(aid).then(function (data) {
       var a = data.assignment;
       $("ad-title").textContent = a.title;
-      $("ad-meta").textContent = a.count + " 題" +
-        (a.examMode ? " · 考試模式（只能作答一次）" : "") +
-        (a.timeLimitMin ? " · 限時 " + a.timeLimitMin + " 分鐘" : "") +
-        (a.dueAt ? " · 截止 " + U.fmtSeen(a.dueAt) : "");
+      $("ad-meta").textContent = a.count + (a.count === 1 ? " question" : " questions") +
+        (a.examMode ? " · Exam mode (one attempt)" : "") +
+        (a.timeLimitMin ? " · " + a.timeLimitMin + " min limit" : "") +
+        (a.dueAt ? " · Due " + U.fmtSeen(a.dueAt) : "");
       var box = $("ad-students");
       box.innerHTML = "";
       if (!data.students.length) {
-        box.innerHTML = '<p class="hint">名冊還是空的。</p>';
+        box.innerHTML = '<p class="hint">The roster is empty.</p>';
       }
       data.students.forEach(function (st) {
         var row = document.createElement("div");
         row.className = "roster-row";
         var mark = st.status === "submitted" ? "✅" : (st.status === "in-progress" ? "✏️" : "—");
         var right = st.status === "submitted"
-          ? (st.total ? st.score + " / " + st.total : "已交")
-          : (st.status === "in-progress" ? "作答中" : "未開始");
+          ? (st.total ? st.score + " / " + st.total : "Submitted")
+          : (st.status === "in-progress" ? "In progress" : "Not started");
         row.innerHTML = '<span class="seat">' + esc(st.seatNo) + "</span><span>" + esc(st.name) +
           "</span><span class=\"seen\">" + mark + " " + esc(right) + "</span>";
         box.appendChild(row);
@@ -731,25 +731,25 @@
   }
 
   function loadDashboard() {
-    $("db-meta").textContent = "載入中…";
+    $("db-meta").textContent = "Loading…";
     API.dashboard(openId).then(function (data) {
       dash = data;
       var done = data.assignments.reduce(function (n, a) { return n + a.submitted; }, 0);
       var expected = data.assignments.length * data.students.length;
-      $("db-meta").textContent = data.students.length + " 位學生 · " + data.assignments.length +
-        " 份作業 · 已交 " + done + " / " + expected + " 份";
+      $("db-meta").textContent = data.students.length + " students · " + data.assignments.length +
+        " assignments · " + done + " / " + expected + " submitted";
 
       /* 全班 */
       var box = $("db-students");
       box.innerHTML = "";
-      if (!data.students.length) box.innerHTML = '<p class="hint">名冊還是空的。</p>';
+      if (!data.students.length) box.innerHTML = '<p class="hint">The roster is empty.</p>';
       data.students.forEach(function (st) {
         var row = document.createElement("button");
         row.type = "button";
         row.className = "roster-row as-btn";
         row.innerHTML = '<span class="seat">' + esc(st.seatNo) + "</span>" +
           "<span>" + esc(st.name) + "</span>" +
-          '<span class="seen">' + st.submitted + " / " + st.assigned + " 份 · " +
+          '<span class="seen">' + st.submitted + " / " + st.assigned + " done · " +
           esc(U.pctLabel(st.avgPct)) + "</span>";
         row.addEventListener("click", function () { openStudentWork(st); });
         box.appendChild(row);
@@ -758,21 +758,21 @@
       /* 各份作業 */
       var ab = $("db-assignments");
       ab.innerHTML = "";
-      if (!data.assignments.length) ab.innerHTML = '<p class="hint">還沒有作業。</p>';
+      if (!data.assignments.length) ab.innerHTML = '<p class="hint">No assignments yet.</p>';
       data.assignments.forEach(function (a) {
         var row = document.createElement("div");
         row.className = "roster-row";
         row.innerHTML = "<span>" + esc(a.title) + "</span>" +
-          '<span class="seen">' + a.submitted + " / " + a.students + " 已交 · 平均 " +
+          '<span class="seen">' + a.submitted + " / " + a.students + " submitted · avg " +
           esc(U.pctLabel(a.avgPct)) + "</span>";
         ab.appendChild(row);
       });
 
       /* 各題型 */
       var kb = $("db-kinds");
-      var KIND_LABEL = { mc: "四選一", gap: "填空", writing: "寫作" };
+      var KIND_LABEL = { mc: "Multiple choice", gap: "Gap fill", writing: "Writing" };
       var kinds = Object.keys(data.byKind);
-      kb.innerHTML = kinds.length ? "" : '<p class="hint">還沒有可統計的作答。</p>';
+      kb.innerHTML = kinds.length ? "" : '<p class="hint">No marked answers yet.</p>';
       kinds.forEach(function (k) {
         var v = data.byKind[k];
         var pct = v.total ? Math.round((v.correct / v.total) * 100) : null;
@@ -786,13 +786,13 @@
       /* 最容易錯的題目 */
       var hb = $("db-hardest");
       hb.innerHTML = "";
-      if (!data.hardest.length) hb.innerHTML = '<p class="hint">還沒有可統計的作答。</p>';
+      if (!data.hardest.length) hb.innerHTML = '<p class="hint">No marked answers yet.</p>';
       data.hardest.forEach(function (h) {
         var row = document.createElement("div");
         row.className = "roster-row";
         row.innerHTML = '<span class="seat">' + h.correctPct + "%</span>" +
-          "<span>" + esc(h.title) + " 第 " + h.index + " 題 — " + esc(h.q.slice(0, 60)) + "</span>" +
-          '<span class="seen">' + h.attempts + " 人作答</span>";
+          "<span>" + esc(h.title) + " · Q" + h.index + " — " + esc(h.q.slice(0, 60)) + "</span>" +
+          '<span class="seen">' + h.attempts + " attempts</span>";
         hb.appendChild(row);
       });
 
@@ -805,8 +805,8 @@
   /* 匯出：一列一位學生，欄位是每份作業的得分，最後一欄是平均。 */
   function exportCSV() {
     if (!dash) return;
-    var header = ["座號", "姓名"].concat(dash.assignments.map(function (a) { return a.title; }))
-      .concat(["已交份數", "平均正確率"]);
+    var header = ["Seat", "Name"].concat(dash.assignments.map(function (a) { return a.title; }))
+      .concat(["Submitted", "Average"]);
     var rows = [header];
 
     /* 每位學生每份作業的分數要另外查——儀表板只給總計，這裡直接用作業詳情補齊 */
@@ -817,8 +817,8 @@
           details.forEach(function (d) {
             var row = d.students.filter(function (x) { return x.id === st.id; })[0];
             line.push(row && row.status === "submitted"
-              ? (row.total ? row.score + "/" + row.total : "已交")
-              : (row && row.status === "in-progress" ? "作答中" : ""));
+              ? (row.total ? row.score + "/" + row.total : "Submitted")
+              : (row && row.status === "in-progress" ? "In progress" : ""));
           });
           line.push(st.submitted + "/" + st.assigned);
           line.push(st.avgPct == null ? "" : st.avgPct + "%");
@@ -829,7 +829,7 @@
         var url = URL.createObjectURL(blob);
         var a = document.createElement("a");
         a.href = url;
-        a.download = (dash.klass.name || "class") + "-成績.csv";
+        a.download = (dash.klass.name || "class") + "-scores.csv";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -840,25 +840,25 @@
   function openStudentWork(st) {
     $("sw-name").textContent = st.seatNo + " " + st.name;
     var box = $("sw-body");
-    box.innerHTML = '<div class="card"><p class="hint">載入中…</p></div>';
+    box.innerHTML = '<div class="card"><p class="hint">Loading…</p></div>';
     API.studentWork(openId, st.id).then(function (data) {
       box.innerHTML = "";
       if (!data.work.length) {
-        box.innerHTML = '<div class="card"><p class="hint">這位學生還沒有交過任何作業。</p></div>';
+        box.innerHTML = '<div class="card"><p class="hint">This student has not submitted anything yet.</p></div>';
         return;
       }
       data.work.forEach(function (w) {
         var card = document.createElement("div");
         card.className = "card";
         var head = '<p class="eyebrow">' + esc(w.title) + "</p><h3>" +
-          (w.total ? w.score + " / " + w.total : "已交") + "</h3>";
+          (w.total ? w.score + " / " + w.total : "Submitted") + "</h3>";
         var body = w.items.map(function (it, i) {
           var mark = it.correct === true ? "✅" : (it.correct === false ? "❌" : "📝");
           var right = it.correct === false && it.answer
-            ? "　正解：" + esc(Array.isArray(it.answer) ? it.answer.join(" / ") : it.answer)
+            ? "  Answer: " + esc(Array.isArray(it.answer) ? it.answer.join(" / ") : it.answer)
             : "";
           return '<div class="roster-row"><span class="seat">' + mark + "</span><span>" +
-            "第 " + (i + 1) + " 題　作答：" + esc(it.given == null || it.given === "" ? "（空白）" : String(it.given).slice(0, 120)) +
+            "Q" + (i + 1) + "  Answered: " + esc(it.given == null || it.given === "" ? "(blank)" : String(it.given).slice(0, 120)) +
             right + "</span></div>";
         }).join("");
         card.innerHTML = head + '<div class="roster">' + body + "</div>";
@@ -882,10 +882,10 @@
     var fb = (work.feedback || {})[i] || {};
     var t = fb.teacher || {};
 
-    wrap.innerHTML = '<p class="eyebrow">第 ' + (i + 1) + " 題（寫作）</p>" +
-      '<details class="bulk"><summary>看學生寫的全文</summary><p class="pre">' +
-      esc(item.given == null || item.given === "" ? "（空白）" : item.given) + "</p></details>" +
-      (fb.ai && fb.ai.overall ? '<p class="hint">AI 批改：' + esc(fb.ai.overall) + "</p>" : "");
+    wrap.innerHTML = '<p class="eyebrow">Q' + (i + 1) + " · Writing</p>" +
+      '<details class="bulk"><summary>Read what the student wrote</summary><p class="pre">' +
+      esc(item.given == null || item.given === "" ? "(blank)" : item.given) + "</p></details>" +
+      (fb.ai && fb.ai.overall ? '<p class="hint">AI examiner: ' + esc(fb.ai.overall) + "</p>" : "");
 
     var row = document.createElement("div");
     row.className = "row-form";
@@ -893,29 +893,29 @@
     score.type = "number";
     score.min = 0;
     score.max = 100;
-    score.placeholder = "分數";
+    score.placeholder = "Score";
     score.style.maxWidth = "6em";
     if (t.score != null) score.value = t.score;
     var comment = document.createElement("input");
     comment.type = "text";
     comment.maxLength = 500;
-    comment.placeholder = "評語（選填）";
+    comment.placeholder = "Comment (optional)";
     if (t.comment) comment.value = t.comment;
     var save = document.createElement("button");
     save.type = "button";
     save.className = "primary-btn small";
-    save.textContent = "儲存";
+    save.textContent = "Save";
     save.addEventListener("click", function () {
       save.disabled = true;
-      save.textContent = "儲存中…";
+      save.textContent = "Saving…";
       API.markWriting(openId, work.submissionId, i,
         score.value === "" ? null : Number(score.value), comment.value).then(function () {
         save.disabled = false;
-        save.textContent = "已儲存 ✓";
-        setTimeout(function () { save.textContent = "儲存"; }, 1500);
+        save.textContent = "Saved ✓";
+        setTimeout(function () { save.textContent = "Save"; }, 1500);
       }, function (e) {
         save.disabled = false;
-        save.textContent = "儲存";
+        save.textContent = "Save";
         alertMsg(e.message);
       });
     });
@@ -957,7 +957,7 @@
   }
 
   function logout() {
-    confirmMsg("要登出嗎？", function () {
+    confirmMsg("Sign out?", function () {
       API.studentLogout();
       API.teacherLogout();
       show("view-role");
@@ -991,6 +991,22 @@
       paintDraft();
       show("view-assign-build");
     });
+    /* 寫作題的現成題型：按一下就把題目與字數填進表單，老師還是可以改。 */
+    var wtRow = $("wt-row");
+    window.CamPick.WRITING_TEMPLATES.forEach(function (t) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ghost-btn small";
+      b.textContent = t.label;
+      b.addEventListener("click", function () {
+        $("in-q-prompt").value = t.prompt;
+        $("in-q-min").value = t.minWords;
+        $("in-q-max").value = t.maxWords;
+        $("in-q-prompt").focus();
+      });
+      wtRow.appendChild(b);
+    });
+
     $("do-bank-pick").addEventListener("click", bankPick);
     $("do-add-q").addEventListener("click", addCustomQuestion);
     $("do-save-assign").addEventListener("click", saveAssignment);
@@ -1001,7 +1017,7 @@
       });
     });
     $("do-delete-assign").addEventListener("click", function () {
-      confirmMsg("確定要刪除這份作業嗎？學生的作答紀錄也會一起刪除。", function () {
+      confirmMsg("Delete this assignment? Student answers for it are deleted too.", function () {
         API.deleteAssignment(openAssignId).then(function () {
           loadAssignments();
           show("view-class");
@@ -1019,7 +1035,7 @@
       });
     });
     $("do-delete-class").addEventListener("click", function () {
-      confirmMsg("確定要刪除這個班級嗎？名冊與所有學生的練習紀錄都會一起刪除，無法復原。", function () {
+      confirmMsg("Delete this class? The roster and every student record are deleted too. This cannot be undone.", function () {
         API.deleteClass(openId).then(function () {
           loadClasses();
           show("view-teacher-home");

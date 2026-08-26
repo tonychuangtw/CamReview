@@ -15,11 +15,44 @@
 
   /* 題庫來源的代號 → 給老師看的名稱 */
   var SOURCES = [
-    { key: "p1", label: "Use of English Part 1 — 四選一克漏字" },
-    { key: "p2", label: "Use of English Part 2 — 填空（一格一字）" },
-    { key: "p3", label: "Use of English Part 3 — 詞形變化" },
-    { key: "p4", label: "Use of English Part 4 — 句型轉換" },
-    { key: "rmc", label: "Reading — 閱讀測驗（四選一）" }
+    { key: "p1", label: "Use of English Part 1 — Multiple-choice cloze" },
+    { key: "p2", label: "Use of English Part 2 — Open cloze (one word per gap)" },
+    { key: "p3", label: "Use of English Part 3 — Word formation" },
+    { key: "p4", label: "Use of English Part 4 — Key word transformations" },
+    { key: "rmc", label: "Reading — Multiple choice" }
+  ];
+
+  /* 老師出寫作題時的現成題型（B2 First Writing Part 1 論說文 + Part 2 三種常見題型）。
+   * 只是把題目文字填進表單，老師還是可以改；字數範圍照劍橋 B2 的 140–190。 */
+  var WRITING_TEMPLATES = [
+    {
+      key: "essay",
+      label: "Part 1 — Essay",
+      minWords: 140,
+      maxWords: 190,
+      prompt: "In your English class you have been talking about the environment. Now your teacher has asked you to write an essay.\n\nWrite an essay using all the notes and give reasons for your point of view.\n\nIs it better for a city to build more parks or more public transport?\n\nNotes\nWrite about:\n1. health\n2. cost\n3. ................ (your own idea)"
+    },
+    {
+      key: "email",
+      label: "Part 2 — Email / letter",
+      minWords: 140,
+      maxWords: 190,
+      prompt: "You have received an email from your English-speaking friend Sam.\n\n\"I'm coming to your town for a week this summer! What should I do while I'm there, and is there anything I should bring? Also, can you recommend somewhere to stay?\"\n\nWrite your email to Sam, answering all of Sam's questions."
+    },
+    {
+      key: "article",
+      label: "Part 2 — Article",
+      minWords: 140,
+      maxWords: 190,
+      prompt: "You have seen this announcement in an international student magazine.\n\nArticles wanted: THE BEST THING I HAVE EVER LEARNED\nWhat was it? Who taught you? Why does it still matter to you today?\n\nWrite your article."
+    },
+    {
+      key: "review",
+      label: "Part 2 — Review",
+      minWords: 140,
+      maxWords: 190,
+      prompt: "You have seen this notice on an English-language website.\n\nReviews wanted: A FILM OR SERIES WORTH WATCHING TWICE\nTell us what it is about, what makes it worth a second viewing, and who you would recommend it to.\n\nWrite your review."
+    }
   ];
 
   function toItem(source, raw) {
@@ -147,6 +180,7 @@
 
   return {
     SOURCES: SOURCES,
+    WRITING_TEMPLATES: WRITING_TEMPLATES,
     toItem: toItem,
     readingToItems: readingToItems,
     sample: sample,

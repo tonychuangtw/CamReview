@@ -24,7 +24,7 @@
 
   /* 最後登入時間，顯示成 8/26 14:05；沒登入過就講清楚。 */
   function fmtSeen(ts) {
-    if (!ts) return "尚未登入";
+    if (!ts) return "Not signed in yet";
     var d = new Date(ts);
     var pad = function (n) { return (n < 10 ? "0" : "") + n; };
     return (d.getMonth() + 1) + "/" + d.getDate() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());

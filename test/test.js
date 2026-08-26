@@ -40,8 +40,8 @@ function check(name, cond) {
 
 /* ---------- fmtSeen ---------- */
 {
-  check("沒登入過講清楚", U.fmtSeen(null) === "尚未登入");
-  check("0 也視為沒登入過", U.fmtSeen(0) === "尚未登入");
+  check("沒登入過講清楚", U.fmtSeen(null) === "Not signed in yet");
+  check("0 也視為沒登入過", U.fmtSeen(0) === "Not signed in yet");
   const d = new Date(2026, 7, 26, 9, 5);      // 8/26 09:05（本地時區）
   check("時間補零", U.fmtSeen(d.getTime()) === "8/26 09:05");
 }
@@ -156,6 +156,44 @@ function check(name, cond) {
 
   check("正確率 null 顯示破折號", U.pctLabel(null) === "—");
   check("正確率 0 要顯示 0% 而不是破折號", U.pctLabel(0) === "0%");
+}
+
+/* ---------- 寫作題現成題型（老師自己出作文題用） ---------- */
+{
+  const P = require(path.join(__dirname, "..", "js", "pick.js"));
+  const T = P.WRITING_TEMPLATES;
+  check("有現成的寫作題型", Array.isArray(T) && T.length >= 4, String(T && T.length));
+  check("題型的 key 不重複", new Set(T.map((t) => t.key)).size === T.length);
+  T.forEach((t) => {
+    check(`${t.key}：有標籤`, typeof t.label === "string" && t.label.length > 0);
+    check(`${t.key}：有題目`, typeof t.prompt === "string" && t.prompt.length > 40);
+    check(`${t.key}：字數範圍合理`, t.minWords > 0 && t.maxWords > t.minWords);
+    /* 介面全英文，題目本身也不可以夾中文 */
+    check(`${t.key}：題目沒有中文`, !/[\u4e00-\u9fff]/.test(t.prompt + t.label));
+    /* 直接丟進 buildCustom 要能變成合法的作業題目 */
+    const item = P.buildCustom({ kind: "writing", prompt: t.prompt, minWords: t.minWords, maxWords: t.maxWords });
+    check(`${t.key}：可以直接建成題目`, item !== null && item.kind === "writing" &&
+      item.minWords === t.minWords && item.maxWords === t.maxWords);
+  });
+}
+
+/* ---------- 介面不可以有中文（2026-08-26 Tony：雙語班，全英文） ---------- */
+{
+  const fs = require("fs");
+  const path = require("path");
+  const root = path.join(__dirname, "..");
+  /* 只看會顯示給使用者的文字：HTML 標籤之間的內容、屬性值，以及 js 的字串常值。
+     註解是給維護的人看的，不算介面。 */
+  const stripComments = (src) =>
+    src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8").replace(/<!--[\s\S]*?-->/g, " ");
+  check("index.html 介面沒有中文", !/[\u4e00-\u9fff]/.test(html),
+    (html.match(/[^\n]*[\u4e00-\u9fff][^\n]*/) || [""])[0].trim().slice(0, 90));
+  ["app.js", "pick.js", "util.js", "api.js", "dialog.js", "versions.js"].forEach((f) => {
+    const src = stripComments(fs.readFileSync(path.join(root, "js", f), "utf8"));
+    check(`js/${f} 介面沒有中文`, !/[\u4e00-\u9fff]/.test(src),
+      (src.match(/[^\n]*[\u4e00-\u9fff][^\n]*/) || [""])[0].trim().slice(0, 90));
+  });
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

@@ -1,35 +1,42 @@
 /* 版本紀錄（新版在最上面）。每次有感的改版就在最上方加一條 { v, date, items: [...] }。
- * 老師看得懂就好，這一頁用中文。 */
+ * ⚠️ 這一頁的文字是給老師和學生看的，全部用英文（2026-08-26 Tony 定案：雙語班，介面不要中文）。 */
 window.APP_VERSIONS = [
   {
+    v: "v5", date: "2026-08-26", items: [
+      "The whole interface is now in English — every button, label, message and this page. Nothing on screen is in Chinese any more.",
+      "Writing tasks got their own builder. Pick \"Writing task\" when you add a question, type your own prompt, and set a word range (for example 140–190). You can build an assignment that is nothing but writing, or mix writing in with multiple choice and gap fill.",
+      "Four ready-made B2 First prompts are one click away (email, article, review, essay) if you would rather start from a template than a blank box."
+    ]
+  },
+  {
     v: "v4", date: "2026-08-26", items: [
-      "寫作題可以請 AI 考官批改：學生交卷後按一下，就會依劍橋官方的四項評分標準（Content／Communicative Achievement／Organisation／Language）給分，並附上整體評語、三項具體改進建議與最多五處語言錯誤的修正。",
-      "同一題只會批改一次，之後回來看都是直接顯示，不會重複耗用批改額度；批改次數以「學生」計算，全班共用學校網路也不會互相排擠。",
-      "老師可以替每一道寫作題打分數並寫評語，與 AI 的批改並存——老師的分數才是最終成績，學生看得到兩者。"
+      "Writing tasks can be marked by an AI examiner. After a student submits, one tap grades the piece against the four official Cambridge criteria (Content, Communicative Achievement, Organisation, Language) and returns an overall comment, three concrete suggestions, and up to five corrected language errors.",
+      "Each piece is marked once. Coming back to it later just shows the saved feedback, so no marking quota is spent twice. The quota is counted per student, so a whole class on the same school network never blocks each other.",
+      "Teachers can add their own score and comment to every writing task alongside the AI feedback. The teacher's score is the one that counts, and students see both."
     ]
   },
   {
     v: "v3", date: "2026-08-26", items: [
-      "班級儀表板：一頁看完全班——每位學生交了幾份、平均正確率；每份作業的交件數與班平均；各題型（選擇／填空）的整體正確率；以及全班最容易錯的前 20 題。",
-      "點任何一位學生就看得到他每一份作業的逐題作答，含他實際寫的答案、對錯與正解，寫作全文也在裡面。",
-      "成績可以匯出成 CSV：一列一位學生，每份作業一欄。檔案開頭有 BOM，用 Excel 開中文姓名不會變亂碼。"
+      "Class dashboard: the whole class on one page — how many assignments each student has handed in and their average accuracy, the submission count and class average for every assignment, overall accuracy by question type (multiple choice and gap fill), and the twenty questions the class gets wrong most often.",
+      "Tap any student to see every assignment question by question: what they actually wrote, whether it was right, and the correct answer. Full writing pieces are in there too.",
+      "Scores export to CSV — one row per student, one column per assignment. The file starts with a BOM so names open correctly in Excel."
     ]
   },
   {
     v: "v2", date: "2026-08-26", items: [
-      "派作業：老師可以從 FCE 題庫挑題（Use of English Part 1–4、閱讀測驗），也可以自己出四選一、填空與寫作題，一份作業可以三種混著出。",
-      "自動批改：選擇題與填空交卷後立刻算分，填空會忽略大小寫、前後空白與句尾標點，學生不會因為多打一個句點就被判錯；寫作題標記為待批改，不列入自動分數。",
-      "考試模式與限時：可以設定作答時限與「只能作答一次」，倒數以伺服器回傳的剩餘時間為準，改裝置時鐘沒有用；時間到自動交卷。",
-      "答案不會外洩：學生取題時伺服器就已經把正解與解析拿掉，交卷之後才看得到；老師端則即時看到全班誰交了、各拿幾分。",
-      "題庫與 LanExamMock 共用同一份正本，只有老師挑題時才會載入，學生端不會多下載這 1 MB。"
+      "Setting assignments: pick questions from the FCE bank (Use of English Parts 1–4 and Reading), or write your own multiple choice, gap fill and writing tasks. One assignment can mix all three.",
+      "Auto-marking: multiple choice and gap fill are scored the moment a student submits. Gap fill ignores capitals, stray spaces and a trailing full stop, so nobody loses a mark over punctuation. Writing tasks are flagged for marking and left out of the automatic score.",
+      "Exam mode and time limits: set a time limit and \"one attempt only\". The countdown follows the time the server reports, so changing the device clock does nothing, and the paper submits itself when time runs out.",
+      "Answers stay hidden: the server strips the answer key and explanations before questions reach a student, and only sends them back after submission. Teachers see who has handed in and what they scored in real time.",
+      "The question bank shares a single source of truth with LanExamMock and only loads when a teacher picks questions, so students never download the extra 1 MB."
     ]
   },
   {
     v: "v1", date: "2026-08-26", items: [
-      "第一批上線：老師用 Google 帳號登入建立班級，系統自動產生 6 碼班級代碼；學生用「代碼＋姓名＋座號」登入，不需要帳號密碼。",
-      "座號就是學生的帳號：同一組代碼與座號在手機、平板、教室電腦登入都是同一個人，練習紀錄自動跨裝置同步。",
-      "名冊會隨著學生登入自動長出來，也可以從 Excel 貼上「座號,姓名」批次匯入；名冊確定後可以鎖定，之後只有名冊上的座號能登入。",
-      "學生與老師的登入憑證完全分開，學生的身分打不到老師端的任何資料。"
+      "First release: teachers sign in with Google and create a class, and the system generates a 6-character class code. Students sign in with the code, their name and their seat number — no passwords.",
+      "The seat number is the account: the same code and seat number on a phone, a tablet or a classroom computer is the same student, and work syncs across all of them.",
+      "The roster fills itself in as students sign in, or paste \"seat number, name\" straight from a spreadsheet to bulk-import it. Once the roster is final you can lock it, and only listed seat numbers can sign in.",
+      "Student and teacher credentials are completely separate — a student sign-in cannot reach anything on the teacher side."
     ]
   }
 ];
