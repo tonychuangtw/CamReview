@@ -4,11 +4,52 @@
 
 STATUS: in-progress
 OBJECTIVE: 做一個 FCE 課堂站——老師建班級、派作業、看全班成績；學生用班級代碼登入練習，跨裝置同步
-NEXT_ACTION: 五批都完成（含 2026-08-26 Tony 追加的「介面全英文」與「老師自己出作文題」），等 Tony 實際帶班後的回饋再調整。可以先做的加值項：聽力題型（需 TTS，可沿用 LanExamMock 剛做好的英/美口音切換）、學生的自由練習模式、老師端一鍵複製作業到另一個班
+NEXT_ACTION: 六批都完成（最新是 2026-08-26 Tony 六點回報：老師識別碼、色系主題、對話框置中、Add 溢出、去 LanExamMock 字樣、版面不溢出），等 Tony 實際帶班後的回饋再調整。**老師識別碼在 backend .env 的 CAM_TEACHER_CODE，要給新老師時從那裡看**（不在 repo 裡）。可以先做的加值項：聽力題型（需 TTS，可沿用 LanExamMock 剛做好的英/美口音切換）、學生的自由練習模式、老師端一鍵複製作業到另一個班
 VALIDATION: node test/test.js 全綠；後端 node test/cam-test.js（在 claude-shared/projects/LanExamMock/backend）全綠；瀏覽器實測老師建班→學生登入→跨裝置看到同一份資料
 BLOCKERS: 無
 PATHS: ~/TelegramClaude/CamReview/（前端）、claude-shared/projects/LanExamMock/backend/cam.js（後端）
-UPDATED: 2026-08-27 13:05 台北
+UPDATED: 2026-08-26 18:40 台北
+
+## 2026-08-26 Tony 六點回報（全部處理完，v6）
+
+1. **Sign out 的 OK 跑到頁面最下面** —— `dialog.js` 從一開始就在產 `.dlg-overlay`／`.dlg-card`，
+   但 `css/style.css` 裡**從來沒有這幾條規則**，所以 overlay 只是個普通區塊，接在 `<main>` 後面排到頁尾。
+   補上 `position:fixed` 滿版置中 ＋ 遮罩。這種「JS 產了 class、CSS 沒跟上」的洞，肉眼看程式很難發現，
+   所以 browser-smoke 加了一條：對話框的按鈕必須落在 viewport 之內。
+
+2. **派作業的 Add 被擠到畫面右邊外面** —— `.row-form` 是 flex 但沒有 `flex-wrap`，
+   而且 flex 子項預設 `min-width:auto`（內容多寬就多寬，壓不下去）。手機上「長選單＋數字框＋按鈕」
+   一定擠爆。改成可換行、每個子項 `min-width:0`，題庫來源的長選單自己佔一整行。
+
+3. **介面不要出現 LanExamMock** —— Tony：「這系統是不同人使用的，他根本就不知道是什麼」。
+   題庫提示與版本紀錄的字樣都改掉了。**執行時本來就沒有跨站相依**：題庫是本站自己的
+   `js/data/fce-bank.js`。`tools/sync-banks.js` 是編譯期工具（從正本 LanExamMock 產出這支檔），
+   使用者永遠看不到；真要完全分家再說，分家的代價是題庫從此要維護兩份。
+
+4. **色系主題** —— 🎨 六色（Ink Black／Deep Navy／Forest Green／Warm Paper／Rose Plum／Celadon）
+   ＋ 字級 85–175%，色票與變數名稱直接沿用 LanExamMock，兩站看起來才是同一家人。存 localStorage，
+   `index.html` 在第一次繪製前就套用（否則會閃一下預設色）。
+
+5. **老師識別碼** —— Tony：「不然學生們都可以登錄當老師，出題目給自己先刷題」。
+   Google 登入只證明「你是誰」，不代表「你是老師」。後端新增 `cam_teachers` 白名單與
+   `POST /api/cam/teacher/activate`，**17 個老師端點全部從 `authenticate` 改走 `teacherAuth`**。
+   識別碼放 backend `.env` 的 `CAM_TEACHER_CODE`（不進 repo），猜碼每小時 10 次上限。
+   ⚠️ **這一層一定要在後端**：只擋前端等於沒擋，學生開 devtools 就繞過去了。
+
+6. **版面不得橫向溢出** —— Tony：「有些會超出去頁面，我要放大縮小很麻煩」。
+   `html`/`body` 用 `overflow-x: clip`。⚠️ **不可以用 `hidden`**：hidden 會讓祖先變成捲動容器，
+   標題列的 `position:sticky` 當場失效（實測 scrollY=400 時標題列 top=-400，等於跟著捲走了）。
+   這件事是 browser-smoke 抓到的，現在留了一條回歸測試守著。
+
+### browser-smoke 新增的四類檢查
+
+- **360px 逐頁量橫向溢出**：走訪 13 個 view，逐一比對每個元素的 `getBoundingClientRect()` 與
+  視窗寬度，超出就印出兇手的標籤、id、class 與座標區間。**不能只看 `document.scrollWidth`** ——
+  加了 `overflow-x:clip` 之後 scrollWidth 永遠等於視窗寬，症狀被蓋掉了，只有逐元素量才抓得到。
+- **量的是「有真實內容」的頁面**：先用 dev token 當老師走完 班級列表→單一班級→儀表板→學生明細→派作業，
+  學生端也點進已交的作業。空白頁當然不會溢出，量空白頁等於沒量。
+- **對話框浮在畫面內**、**捲動後標題列仍固定**、**換色系會立刻套用並記住**。
+- 後端測試同步加了「沒有識別碼就建不了班／識別碼錯要擋下／輸入正確即解鎖」。
 
 ## 2026-08-26 Tony 追加的兩項（已完成）
 
