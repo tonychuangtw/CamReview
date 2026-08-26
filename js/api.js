@@ -89,6 +89,13 @@
       });
     },
 
+    gradeWriting: function (aid) {
+      return request("POST", "/api/cam/assignments/" + aid + "/grade-writing", { token: studentToken(), body: {} });
+    },
+    writingFeedback: function (aid) {
+      return request("GET", "/api/cam/assignments/" + aid + "/writing-feedback", { token: studentToken() });
+    },
+
     getProgress: function () {
       return request("GET", "/api/cam/progress", { token: studentToken() });
     },
@@ -153,6 +160,11 @@
     },
     studentWork: function (id, sid) {
       return request("GET", "/api/cam/classes/" + id + "/students/" + sid + "/work", { token: teacherToken() });
+    },
+    markWriting: function (id, subId, index, score, comment) {
+      return request("PATCH", "/api/cam/classes/" + id + "/submissions/" + subId + "/writing", {
+        token: teacherToken(), body: { index: index, score: score, comment: comment }
+      });
     }
   };
 

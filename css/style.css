@@ -282,3 +282,16 @@ textarea,
   overflow: hidden;
 }
 .bar-fill { display: block; height: 100%; background: var(--accent); }
+
+/* ---------- 寫作批改 ---------- */
+.fb-teacher {
+  border-left: 3px solid var(--accent);
+  padding-left: 10px;
+  margin: 10px 0;
+}
+.writing-mark {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.writing-mark .row-form input { margin-top: 0; }

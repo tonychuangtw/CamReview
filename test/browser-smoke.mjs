@@ -233,6 +233,12 @@ try {
   check('老師端看得到該生已交', me && me.status === 'submitted');
   check('老師端看得到分數', me && me.score === 2 && me.total === 2);
 
+  /* 寫作題要有取得批改的按鈕（⚠ 不在測試裡真的按下去——那會呼叫 K3，是要花錢的） */
+  check('寫作題出現取得批改的按鈕',
+    /Get examiner feedback/.test(await js(`document.getElementById('res-review').textContent`)));
+  check('選擇與填空題不會出現批改按鈕',
+    await js(`document.querySelectorAll('#res-review button').length === 1`));
+
   console.log('\n老師儀表板（用 dev token 直接驗後端算出來的數字）');
   const dash = await (await fetch(`http://127.0.0.1:${API_PORT}/api/cam/classes/${classId}/dashboard`, {
     headers: { Authorization: 'Bearer devtok' }

@@ -449,10 +449,90 @@
         '<p class="pre">' + esc(take.items[i].q || take.items[i].prompt) + "</p>" +
         "<p>Your answer: " + esc(given) + "</p>" + right +
         (r.explanation ? '<p class="hint">' + esc(r.explanation) + "</p>" : "");
+      if (r.kind === "writing") card.appendChild(writingBlock(i));
       box.appendChild(card);
     });
     show("view-result");
     loadStudentAssignments();
+  }
+
+
+  /* ---------------- 寫作批改（學生端） ---------------- */
+  function renderFeedback(fb) {
+    var wrap = document.createElement("div");
+    if (!fb) return wrap;
+    if (fb.error) {
+      wrap.innerHTML = '<p class="error-text">' + esc(fb.error) + "</p>";
+      return wrap;
+    }
+    var t = fb.teacher;
+    var ai = fb.ai;
+    var html = "";
+    if (t) {
+      html += '<div class="fb-teacher"><p class="eyebrow">Your teacher</p>' +
+        (t.score != null ? "<p><strong>" + t.score + "</strong></p>" : "") +
+        (t.comment ? '<p class="pre">' + esc(t.comment) + "</p>" : "") + "</div>";
+    }
+    if (ai) {
+      html += '<p class="eyebrow">Examiner feedback</p>';
+      if (Array.isArray(ai.scores)) {
+        html += '<div class="roster">' + ai.scores.map(function (sc) {
+          return '<div class="roster-row"><span class="seat">' + esc(sc.score) + "/" + esc(sc.max) +
+            "</span><span>" + esc(sc.criterion) + " — " + esc(sc.comment || "") + "</span></div>";
+        }).join("") + "</div>";
+      }
+      if (ai.overall) html += '<p class="hint">' + esc(ai.overall) + "</p>";
+      if (Array.isArray(ai.improvements) && ai.improvements.length) {
+        html += "<p><strong>How to improve</strong></p><ul class=\"steps\">" +
+          ai.improvements.map(function (im) {
+            return "<li>" + esc(im.issue) + " → " + esc(im.fix) +
+              (im.example ? '<br><span class="hint">' + esc(im.example) + "</span>" : "") + "</li>";
+          }).join("") + "</ul>";
+      }
+      if (Array.isArray(ai.corrections) && ai.corrections.length) {
+        html += "<p><strong>Language corrections</strong></p><ul class=\"steps\">" +
+          ai.corrections.map(function (c) {
+            return "<li><s>" + esc(c.original) + "</s> → <strong>" + esc(c.corrected) + "</strong>" +
+              (c.reason ? '<br><span class="hint">' + esc(c.reason) + "</span>" : "") + "</li>";
+          }).join("") + "</ul>";
+      }
+    }
+    wrap.innerHTML = html;
+    return wrap;
+  }
+
+  function writingBlock(i) {
+    var wrap = document.createElement("div");
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "primary-btn small";
+    btn.textContent = "Get examiner feedback";
+    var out = document.createElement("div");
+
+    btn.addEventListener("click", function () {
+      btn.disabled = true;
+      btn.textContent = "Marking… (this takes up to a minute)";
+      API.gradeWriting(take.assignment.id).then(function (data) {
+        btn.remove();
+        out.appendChild(renderFeedback(data.feedback[i]));
+      }, function (e) {
+        btn.disabled = false;
+        btn.textContent = "Get examiner feedback";
+        out.innerHTML = '<p class="error-text">' + esc(e.message) + "</p>";
+      });
+    });
+
+    /* 已經批改過就直接顯示，不再花一次錢 */
+    API.writingFeedback(take.assignment.id).then(function (data) {
+      if (data.feedback && data.feedback[i]) {
+        btn.remove();
+        out.appendChild(renderFeedback(data.feedback[i]));
+      }
+    }, function () {});
+
+    wrap.appendChild(btn);
+    wrap.appendChild(out);
+    return wrap;
   }
 
   /* ================= 老師：作業 ================= */
@@ -782,10 +862,68 @@
             right + "</span></div>";
         }).join("");
         card.innerHTML = head + '<div class="roster">' + body + "</div>";
+
+        /* 寫作題：秀出全文與 AI 批改，並讓老師直接打分數 */
+        w.items.forEach(function (it, i) {
+          if (it.kind !== "writing") return;
+          card.appendChild(writingMarkBlock(w, i, it));
+        });
         box.appendChild(card);
       });
       show("view-student-work");
     }, function (e) { alertMsg(e.message); });
+  }
+
+
+  /* 老師替單一寫作題打分數與寫評語 */
+  function writingMarkBlock(work, i, item) {
+    var wrap = document.createElement("div");
+    wrap.className = "writing-mark";
+    var fb = (work.feedback || {})[i] || {};
+    var t = fb.teacher || {};
+
+    wrap.innerHTML = '<p class="eyebrow">第 ' + (i + 1) + " 題（寫作）</p>" +
+      '<details class="bulk"><summary>看學生寫的全文</summary><p class="pre">' +
+      esc(item.given == null || item.given === "" ? "（空白）" : item.given) + "</p></details>" +
+      (fb.ai && fb.ai.overall ? '<p class="hint">AI 批改：' + esc(fb.ai.overall) + "</p>" : "");
+
+    var row = document.createElement("div");
+    row.className = "row-form";
+    var score = document.createElement("input");
+    score.type = "number";
+    score.min = 0;
+    score.max = 100;
+    score.placeholder = "分數";
+    score.style.maxWidth = "6em";
+    if (t.score != null) score.value = t.score;
+    var comment = document.createElement("input");
+    comment.type = "text";
+    comment.maxLength = 500;
+    comment.placeholder = "評語（選填）";
+    if (t.comment) comment.value = t.comment;
+    var save = document.createElement("button");
+    save.type = "button";
+    save.className = "primary-btn small";
+    save.textContent = "儲存";
+    save.addEventListener("click", function () {
+      save.disabled = true;
+      save.textContent = "儲存中…";
+      API.markWriting(openId, work.submissionId, i,
+        score.value === "" ? null : Number(score.value), comment.value).then(function () {
+        save.disabled = false;
+        save.textContent = "已儲存 ✓";
+        setTimeout(function () { save.textContent = "儲存"; }, 1500);
+      }, function (e) {
+        save.disabled = false;
+        save.textContent = "儲存";
+        alertMsg(e.message);
+      });
+    });
+    row.appendChild(score);
+    row.appendChild(comment);
+    row.appendChild(save);
+    wrap.appendChild(row);
+    return wrap;
   }
 
   /* ---------------- 版本紀錄 ---------------- */
