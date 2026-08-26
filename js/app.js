@@ -1010,6 +1010,48 @@
     if (target === "back") { show(beforeVersions); return; }
   }
 
+  /* ---------------- 縮放偵測 ----------------
+   * iOS Safari 把頁面放大之後不會自己還原，重新整理也不會。使用者看到的症狀是
+   * 「右邊被切掉、標題列不見了」，完全不會聯想到那是縮放——2026-08-26 Tony
+   * 連續回報三次都是同一件事，每次都要靠截圖比對才判斷得出來。
+   * 這裡直接量：visualViewport.scale > 1 就是被放大了，講清楚並教怎麼還原。
+   * 注意：這偵測的是「捏放大」（visual viewport）。Safari 網址列 AA 選單的
+   * 頁面縮放是另一回事——那個會讓版面重新排版，不會切掉內容，所以不用提示。 */
+  var zoomDismissed = false;
+
+  function zoomScale() {
+    var vv = window.visualViewport;
+    return vv && vv.scale ? vv.scale : 1;
+  }
+
+  function paintZoomWarn() {
+    var box = $("zoom-warn");
+    if (!box) return;
+    var s = zoomScale();
+    if (zoomDismissed || s <= 1.05) { box.classList.add("hidden"); return; }
+    $("zoom-warn-text").textContent =
+      "This page is zoomed in to " + Math.round(s * 100) + "%, so the right-hand side is cut off. " +
+      "Pinch with two fingers to zoom back out.";
+    box.classList.remove("hidden");
+  }
+
+  function initZoomWatch() {
+    var box = $("zoom-warn");
+    if (!box) return;
+    $("zoom-warn-x").addEventListener("click", function () {
+      zoomDismissed = true;
+      box.classList.add("hidden");
+    });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", function () {
+        /* 縮回去就把「使用者關掉提示」的狀態清掉，下次再放大還是會提醒 */
+        if (zoomScale() <= 1.05) zoomDismissed = false;
+        paintZoomWarn();
+      });
+    }
+    paintZoomWarn();
+  }
+
   /* ---------------- 色系主題與字級（Tony 2026-08-26 要求，比照 LanExamMock） ---------------- */
   var K_THEME = "cam_theme", K_FS = "cam_fontsize";
   var THEMES = [
@@ -1119,7 +1161,17 @@
        光看畫面分不出他拿到的是修好前還是修好後的版本（GitHub Pages 的
        HTML 會被快取 10 分鐘），有這個戳就不用猜。 */
     $("build-stamp").textContent = STAMP;
-    $("show-versions").addEventListener("click", function () { paintVersions(); show("view-versions"); });
+    $("build-viewport").textContent =
+      window.innerWidth + "\u00d7" + window.innerHeight + " css px, zoom " +
+      Math.round(zoomScale() * 100) + "%, text " + currentFS() + "%";
+    initZoomWatch();
+    $("show-versions").addEventListener("click", function () {
+      $("build-viewport").textContent =
+        window.innerWidth + "\u00d7" + window.innerHeight + " css px, zoom " +
+        Math.round(zoomScale() * 100) + "%, text " + currentFS() + "%";
+      paintVersions();
+      show("view-versions");
+    });
 
     /* 題庫來源下拉：內容由 pick.js 定義，兩邊才不會走鐘 */
     var srcSel = $("in-bank-source");

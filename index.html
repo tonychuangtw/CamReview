@@ -23,7 +23,7 @@
   </script>
   <title>CamReview — Cambridge Practice for the Classroom</title>
   <meta name="description" content="Cambridge exam practice for the classroom — teachers set assignments, students practise, progress syncs across devices.">
-  <link rel="stylesheet" href="css/style.css?v=20260826j">
+  <link rel="stylesheet" href="css/style.css?v=20260826k">
 </head>
 <body>
 
@@ -33,6 +33,11 @@
   <button id="theme-btn" class="icon-btn" type="button" aria-label="Choose theme" title="Colours &amp; text size">🎨</button>
   <button id="logout" class="ghost-btn small hidden" type="button">Sign out</button>
 </header>
+
+<div id="zoom-warn" class="zoom-warn hidden">
+  <span id="zoom-warn-text"></span>
+  <button id="zoom-warn-x" class="link-btn" type="button" aria-label="Dismiss">✕</button>
+</div>
 
 <main id="main">
 
@@ -368,7 +373,8 @@
     </ol>
     <h2>Release notes</h2>
     <p class="hint">This device is running build <strong id="build-stamp">—</strong>. If you report something
-      that looks wrong, quoting this tells us whether you already have the fix.</p>
+      that looks wrong, quoting this tells us whether you already have the fix.<br>
+      Screen: <span id="build-viewport">—</span></p>
     <div id="versions"></div>
   </div>
 </section>
@@ -385,11 +391,11 @@
   </div>
 </div>
 
-<script src="js/dialog.js?v=20260826j"></script>
-<script src="js/util.js?v=20260826j"></script>
-<script src="js/pick.js?v=20260826j"></script>
-<script src="js/versions.js?v=20260826j"></script>
-<script src="js/api.js?v=20260826j"></script>
-<script src="js/app.js?v=20260826j"></script>
+<script src="js/dialog.js?v=20260826k"></script>
+<script src="js/util.js?v=20260826k"></script>
+<script src="js/pick.js?v=20260826k"></script>
+<script src="js/versions.js?v=20260826k"></script>
+<script src="js/api.js?v=20260826k"></script>
+<script src="js/app.js?v=20260826k"></script>
 </body>
 </html>

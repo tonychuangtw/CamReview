@@ -600,3 +600,24 @@ select,
 textarea {
   font-size: max(16px, 1rem);
 }
+
+
+/* ---------- 縮放提示 ----------
+   iOS Safari 一旦把頁面放大（點到小欄位、或使用者自己捏），
+   放大狀態會一直留著，重新整理也不會還原。使用者看到的是「右邊被切掉」，
+   不會聯想到那是縮放——Tony 2026-08-26 連續回報了三次都是這個。
+   偵測到就直接講，並說明怎麼還原。 */
+.zoom-warn {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: max(16px, 0.9rem);
+  font-weight: 600;
+}
+.zoom-warn .link-btn { margin-left: auto; color: var(--accent-contrast); flex: none; font-size: 1.1rem; }

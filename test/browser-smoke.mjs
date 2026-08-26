@@ -401,6 +401,26 @@ try {
   check('捲動後標題列仍固定在最上方', st.y > 0 && Math.abs(st.top) <= 1, sticky);
   await js(`window.scrollTo(0, 0)`);
 
+  /* 縮放提示：沒放大時不能出現，模擬放大後要出現並講出倍率 */
+  const zw = await js(`(function () {
+    var box = document.getElementById('zoom-warn');
+    var hiddenWhenNormal = box.classList.contains('hidden');
+    /* 直接假造 visualViewport.scale，再觸發一次 resize 讓程式重畫 */
+    try {
+      Object.defineProperty(window.visualViewport, 'scale', { value: 1.5, configurable: true });
+    } catch (e) { return JSON.stringify({ ok: false, why: 'cannot stub scale' }); }
+    window.visualViewport.dispatchEvent(new Event('resize'));
+    var shown = !box.classList.contains('hidden');
+    var txt = document.getElementById('zoom-warn-text').textContent;
+    document.getElementById('zoom-warn-x').click();
+    var dismissed = box.classList.contains('hidden');
+    Object.defineProperty(window.visualViewport, 'scale', { value: 1, configurable: true });
+    window.visualViewport.dispatchEvent(new Event('resize'));
+    return JSON.stringify({ ok: hiddenWhenNormal && shown && /150%/.test(txt) && dismissed,
+      hiddenWhenNormal: hiddenWhenNormal, shown: shown, txt: txt.slice(0, 60), dismissed: dismissed });
+  })()`);
+  check('放大時會出現提示、正常時不出現、可以關掉', JSON.parse(zw).ok, zw);
+
   /* 色系主題：切換後 CSS 變數要真的變，且會存下來 */
   const th = await js(`(function () {
     document.querySelector('.dlg-overlay') && document.querySelector('.dlg-overlay').remove();
