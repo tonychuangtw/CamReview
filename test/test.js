@@ -143,5 +143,20 @@ function check(name, cond) {
   check("字數：換行也算分隔", P.countWords("a\nb") === 2);
 }
 
+/* ---------- CSV 匯出 ---------- */
+{
+  const csv = U.toCSV([["座號", "姓名", "分數"], ["7", "王, 小明", "3/5"]]);
+  check("CSV 開頭有 BOM（Excel 才不會亂碼）", csv.charCodeAt(0) === 0xfeff);
+  check("含逗號的欄位有加引號", csv.includes('"王, 小明"'));
+  check("列以 CRLF 分隔", csv.includes("\r\n"));
+  check("引號會被跳脫成兩個", U.toCSV([['say "hi"']]).includes('""hi""'));
+  check("含換行的欄位有加引號", U.toCSV([["a\nb"]]).includes('"a\nb"'));
+  check("空值不會變成 undefined", U.toCSV([[null, undefined, 0]]).endsWith(",,0"));
+  check("空陣列不會爆", typeof U.toCSV([]) === "string");
+
+  check("正確率 null 顯示破折號", U.pctLabel(null) === "—");
+  check("正確率 0 要顯示 0% 而不是破折號", U.pctLabel(0) === "0%");
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

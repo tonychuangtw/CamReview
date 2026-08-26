@@ -145,6 +145,14 @@
     },
     deleteAssignment: function (aid) {
       return request("DELETE", "/api/cam/assignments/" + aid, { token: teacherToken() });
+    },
+
+    /* ---------- 老師：儀表板 ---------- */
+    dashboard: function (id) {
+      return request("GET", "/api/cam/classes/" + id + "/dashboard", { token: teacherToken() });
+    },
+    studentWork: function (id, sid) {
+      return request("GET", "/api/cam/classes/" + id + "/students/" + sid + "/work", { token: teacherToken() });
     }
   };
 

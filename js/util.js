@@ -42,5 +42,27 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
-  return { parseBulk: parseBulk, fmtSeen: fmtSeen, normalizeCode: normalizeCode, esc: esc };
+  /* 產生 CSV。老師會用 Excel 開，所以：
+   *   - 含逗號、引號或換行的欄位要用雙引號包起來，內部的引號要變成兩個
+   *   - 開頭補 BOM，Excel 才不會把中文姓名讀成亂碼（這是最常被回報的問題） */
+  function toCSV(rows) {
+    var body = (rows || []).map(function (row) {
+      return (row || []).map(function (cell) {
+        var v = cell == null ? "" : String(cell);
+        return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+      }).join(",");
+    }).join("\r\n");
+    return "\ufeff" + body;
+  }
+
+  /* 正確率轉成一句人看得懂的話（null 代表還沒有可統計的作答） */
+  function pctLabel(pct) {
+    if (pct == null) return "—";
+    return pct + "%";
+  }
+
+  return {
+    parseBulk: parseBulk, fmtSeen: fmtSeen, normalizeCode: normalizeCode, esc: esc,
+    toCSV: toCSV, pctLabel: pctLabel
+  };
 });

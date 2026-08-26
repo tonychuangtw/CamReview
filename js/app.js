@@ -27,7 +27,8 @@
   /* ---------------- 檢視切換 ---------------- */
   var VIEWS = ["view-role", "view-student-login", "view-student-home",
     "view-teacher-login", "view-teacher-home", "view-class", "view-assign-build",
-    "view-assign-detail", "view-take", "view-result", "view-versions"];
+    "view-assign-detail", "view-dashboard", "view-student-work",
+    "view-take", "view-result", "view-versions"];
   var current = "view-role";
   var beforeVersions = "view-role";
 
@@ -640,6 +641,153 @@
     }, function (e) { alertMsg(e.message); });
   }
 
+
+  /* ================= 老師：班級儀表板 ================= */
+  var dash = null;
+
+  function bar(pct) {
+    var v = pct == null ? 0 : pct;
+    return '<span class="bar"><span class="bar-fill" style="width:' + v + '%"></span></span>';
+  }
+
+  function loadDashboard() {
+    $("db-meta").textContent = "載入中…";
+    API.dashboard(openId).then(function (data) {
+      dash = data;
+      var done = data.assignments.reduce(function (n, a) { return n + a.submitted; }, 0);
+      var expected = data.assignments.length * data.students.length;
+      $("db-meta").textContent = data.students.length + " 位學生 · " + data.assignments.length +
+        " 份作業 · 已交 " + done + " / " + expected + " 份";
+
+      /* 全班 */
+      var box = $("db-students");
+      box.innerHTML = "";
+      if (!data.students.length) box.innerHTML = '<p class="hint">名冊還是空的。</p>';
+      data.students.forEach(function (st) {
+        var row = document.createElement("button");
+        row.type = "button";
+        row.className = "roster-row as-btn";
+        row.innerHTML = '<span class="seat">' + esc(st.seatNo) + "</span>" +
+          "<span>" + esc(st.name) + "</span>" +
+          '<span class="seen">' + st.submitted + " / " + st.assigned + " 份 · " +
+          esc(U.pctLabel(st.avgPct)) + "</span>";
+        row.addEventListener("click", function () { openStudentWork(st); });
+        box.appendChild(row);
+      });
+
+      /* 各份作業 */
+      var ab = $("db-assignments");
+      ab.innerHTML = "";
+      if (!data.assignments.length) ab.innerHTML = '<p class="hint">還沒有作業。</p>';
+      data.assignments.forEach(function (a) {
+        var row = document.createElement("div");
+        row.className = "roster-row";
+        row.innerHTML = "<span>" + esc(a.title) + "</span>" +
+          '<span class="seen">' + a.submitted + " / " + a.students + " 已交 · 平均 " +
+          esc(U.pctLabel(a.avgPct)) + "</span>";
+        ab.appendChild(row);
+      });
+
+      /* 各題型 */
+      var kb = $("db-kinds");
+      var KIND_LABEL = { mc: "四選一", gap: "填空", writing: "寫作" };
+      var kinds = Object.keys(data.byKind);
+      kb.innerHTML = kinds.length ? "" : '<p class="hint">還沒有可統計的作答。</p>';
+      kinds.forEach(function (k) {
+        var v = data.byKind[k];
+        var pct = v.total ? Math.round((v.correct / v.total) * 100) : null;
+        var row = document.createElement("div");
+        row.className = "kind-row";
+        row.innerHTML = "<span>" + esc(KIND_LABEL[k] || k) + "</span>" + bar(pct) +
+          '<span class="seen">' + esc(U.pctLabel(pct)) + "（" + v.correct + " / " + v.total + "）</span>";
+        kb.appendChild(row);
+      });
+
+      /* 最容易錯的題目 */
+      var hb = $("db-hardest");
+      hb.innerHTML = "";
+      if (!data.hardest.length) hb.innerHTML = '<p class="hint">還沒有可統計的作答。</p>';
+      data.hardest.forEach(function (h) {
+        var row = document.createElement("div");
+        row.className = "roster-row";
+        row.innerHTML = '<span class="seat">' + h.correctPct + "%</span>" +
+          "<span>" + esc(h.title) + " 第 " + h.index + " 題 — " + esc(h.q.slice(0, 60)) + "</span>" +
+          '<span class="seen">' + h.attempts + " 人作答</span>";
+        hb.appendChild(row);
+      });
+
+      show("view-dashboard");
+    }, function (e) {
+      $("db-meta").textContent = e.message;
+    });
+  }
+
+  /* 匯出：一列一位學生，欄位是每份作業的得分，最後一欄是平均。 */
+  function exportCSV() {
+    if (!dash) return;
+    var header = ["座號", "姓名"].concat(dash.assignments.map(function (a) { return a.title; }))
+      .concat(["已交份數", "平均正確率"]);
+    var rows = [header];
+
+    /* 每位學生每份作業的分數要另外查——儀表板只給總計，這裡直接用作業詳情補齊 */
+    Promise.all(dash.assignments.map(function (a) { return API.getAssignment(a.id); }))
+      .then(function (details) {
+        dash.students.forEach(function (st) {
+          var line = [st.seatNo, st.name];
+          details.forEach(function (d) {
+            var row = d.students.filter(function (x) { return x.id === st.id; })[0];
+            line.push(row && row.status === "submitted"
+              ? (row.total ? row.score + "/" + row.total : "已交")
+              : (row && row.status === "in-progress" ? "作答中" : ""));
+          });
+          line.push(st.submitted + "/" + st.assigned);
+          line.push(st.avgPct == null ? "" : st.avgPct + "%");
+          rows.push(line);
+        });
+
+        var blob = new Blob([U.toCSV(rows)], { type: "text/csv;charset=utf-8" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = (dash.klass.name || "class") + "-成績.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      }, function (e) { alertMsg(e.message); });
+  }
+
+  function openStudentWork(st) {
+    $("sw-name").textContent = st.seatNo + " " + st.name;
+    var box = $("sw-body");
+    box.innerHTML = '<div class="card"><p class="hint">載入中…</p></div>';
+    API.studentWork(openId, st.id).then(function (data) {
+      box.innerHTML = "";
+      if (!data.work.length) {
+        box.innerHTML = '<div class="card"><p class="hint">這位學生還沒有交過任何作業。</p></div>';
+        return;
+      }
+      data.work.forEach(function (w) {
+        var card = document.createElement("div");
+        card.className = "card";
+        var head = '<p class="eyebrow">' + esc(w.title) + "</p><h3>" +
+          (w.total ? w.score + " / " + w.total : "已交") + "</h3>";
+        var body = w.items.map(function (it, i) {
+          var mark = it.correct === true ? "✅" : (it.correct === false ? "❌" : "📝");
+          var right = it.correct === false && it.answer
+            ? "　正解：" + esc(Array.isArray(it.answer) ? it.answer.join(" / ") : it.answer)
+            : "";
+          return '<div class="roster-row"><span class="seat">' + mark + "</span><span>" +
+            "第 " + (i + 1) + " 題　作答：" + esc(it.given == null || it.given === "" ? "（空白）" : String(it.given).slice(0, 120)) +
+            right + "</span></div>";
+        }).join("");
+        card.innerHTML = head + '<div class="roster">' + body + "</div>";
+        box.appendChild(card);
+      });
+      show("view-student-work");
+    }, function (e) { alertMsg(e.message); });
+  }
+
   /* ---------------- 版本紀錄 ---------------- */
   function paintVersions() {
     var box = $("versions");
@@ -666,6 +814,7 @@
     }
     if (target === "teacher-home") { loadClasses(); show("view-teacher-home"); return; }
     if (target === "class") { stopTimer(); if (openId) openClass(openId); else goto("teacher-home"); return; }
+    if (target === "dashboard") { loadDashboard(); return; }
     if (target === "back") { show(beforeVersions); return; }
   }
 
@@ -722,6 +871,8 @@
       });
     });
     $("do-submit").addEventListener("click", function () { submitTake(false); });
+    $("do-dashboard").addEventListener("click", loadDashboard);
+    $("do-csv").addEventListener("click", exportCSV);
 
     $("cls-locked").addEventListener("change", function () {
       API.updateClass(openId, { locked: $("cls-locked").checked }).then(null, function (e) {

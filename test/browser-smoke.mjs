@@ -233,6 +233,25 @@ try {
   check('老師端看得到該生已交', me && me.status === 'submitted');
   check('老師端看得到分數', me && me.score === 2 && me.total === 2);
 
+  console.log('\n老師儀表板（用 dev token 直接驗後端算出來的數字）');
+  const dash = await (await fetch(`http://127.0.0.1:${API_PORT}/api/cam/classes/${classId}/dashboard`, {
+    headers: { Authorization: 'Bearer devtok' }
+  })).json();
+  check('儀表板算出全班人數', dash.students.length >= 1);
+  const dStu = dash.students.find((s) => s.seatNo === '7');
+  check('該生交了一份', dStu && dStu.submitted === 1);
+  check('該生平均 100%（兩題全對）', dStu && dStu.avgPct === 100, JSON.stringify(dStu));
+  check('作業平均算得出來', dash.assignments[0].avgPct === 100);
+  check('題型統計不含寫作', !dash.byKind.writing);
+  check('最容易錯的題目列表有內容', dash.hardest.length >= 2);
+
+  const work = await (await fetch(
+    `http://127.0.0.1:${API_PORT}/api/cam/classes/${classId}/students/${dStu.id}/work`,
+    { headers: { Authorization: 'Bearer devtok' } })).json();
+  check('看得到該生的作答明細', work.work.length === 1 && work.work[0].items.length === 3);
+  check('選擇題的作答轉成選項文字', work.work[0].items[0].given === 'on', String(work.work[0].items[0].given));
+  check('寫作全文有保留', work.work[0].items[2].given === 'one two three', String(work.work[0].items[2].given));
+
   console.log('\n老師端名冊');
   const roster = await (await fetch(`http://127.0.0.1:${API_PORT}/api/cam/classes/${classId}/students`, {
     headers: { Authorization: 'Bearer devtok' }

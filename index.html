@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CamReview — 劍橋英檢課堂版</title>
   <meta name="description" content="Cambridge exam practice for the classroom — teachers set assignments, students practise, progress syncs across devices.">
-  <link rel="stylesheet" href="css/style.css?v=20260826d">
+  <link rel="stylesheet" href="css/style.css?v=20260826e">
 </head>
 <body>
 
@@ -118,7 +118,10 @@
     <div class="card">
       <h3>作業</h3>
       <div id="assign-list" class="class-list"></div>
-      <button id="do-new-assign" class="primary-btn small" type="button">＋ 新增作業</button>
+      <div class="row-form">
+        <button id="do-new-assign" class="primary-btn small" type="button">＋ 新增作業</button>
+        <button id="do-dashboard" class="ghost-btn small" type="button">📊 班級儀表板</button>
+      </div>
     </div>
 
     <div class="card">
@@ -237,6 +240,46 @@
     </div>
   </section>
 
+  <!-- ========== 老師：班級儀表板 ========== -->
+  <section id="view-dashboard" class="view hidden">
+    <div class="card">
+      <button class="ghost-btn small" type="button" data-go="class">← 回班級</button>
+      <h2>班級儀表板</h2>
+      <p class="hint" id="db-meta"></p>
+      <button id="do-csv" class="ghost-btn small" type="button">⬇️ 匯出成績 CSV</button>
+    </div>
+
+    <div class="card">
+      <h3>全班</h3>
+      <div id="db-students" class="roster"></div>
+    </div>
+
+    <div class="card">
+      <h3>各份作業</h3>
+      <div id="db-assignments" class="roster"></div>
+    </div>
+
+    <div class="card">
+      <h3>各題型正確率</h3>
+      <div id="db-kinds"></div>
+      <p class="hint">只統計自動批改的題目（選擇與填空），寫作題不列入。</p>
+    </div>
+
+    <div class="card">
+      <h3>全班最容易錯的題目</h3>
+      <div id="db-hardest" class="roster"></div>
+    </div>
+  </section>
+
+  <!-- ========== 老師：單一學生 ========== -->
+  <section id="view-student-work" class="view hidden">
+    <div class="card">
+      <button class="ghost-btn small" type="button" data-go="dashboard">← 回儀表板</button>
+      <h2 id="sw-name"></h2>
+    </div>
+    <div id="sw-body"></div>
+  </section>
+
   <!-- ========== 學生：作答 ========== -->
   <section id="view-take" class="view hidden">
     <div class="card">
@@ -290,11 +333,11 @@
   </div>
 </section>
 
-<script src="js/dialog.js?v=20260826d"></script>
-<script src="js/util.js?v=20260826d"></script>
-<script src="js/pick.js?v=20260826d"></script>
-<script src="js/versions.js?v=20260826d"></script>
-<script src="js/api.js?v=20260826d"></script>
-<script src="js/app.js?v=20260826d"></script>
+<script src="js/dialog.js?v=20260826e"></script>
+<script src="js/util.js?v=20260826e"></script>
+<script src="js/pick.js?v=20260826e"></script>
+<script src="js/versions.js?v=20260826e"></script>
+<script src="js/api.js?v=20260826e"></script>
+<script src="js/app.js?v=20260826e"></script>
 </body>
 </html>

@@ -268,3 +268,17 @@ textarea,
   font: inherit;
 }
 #take-timer { text-align: center; letter-spacing: 0.1em; }
+
+/* ---------- 儀表板 ---------- */
+.roster-row.as-btn { cursor: pointer; text-align: left; font: inherit; width: 100%; }
+.roster-row.as-btn:hover { border-color: var(--accent); }
+.kind-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 0.92rem; }
+.kind-row > span:first-child { min-width: 4.5em; }
+.bar {
+  flex: 1;
+  height: 10px;
+  background: var(--surface2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.bar-fill { display: block; height: 100%; background: var(--accent); }
