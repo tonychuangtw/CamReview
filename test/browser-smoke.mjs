@@ -48,7 +48,6 @@ process.env.DEV_TOKEN = 'devtok';
 process.env.DEV_USER_EMAIL = 'smoke@example.com';
 process.env.DEV_USER_SUB = 'smoke-sub';
 process.env.CAM_TEACHER_CODE = 'SMOKECODE';
-process.env.OWNER_EMAIL = 'nobody@example.com';
 const express = require('express');
 const cors = require('cors');
 const cam = require(${JSON.stringify(join(BACKEND, 'cam.js'))});
