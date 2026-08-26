@@ -9,7 +9,10 @@
 (function () {
   "use strict";
 
-  var API_BASE = "https://claudebot500.tailfcf67f.ts.net";
+  /* 正式站的後端。test/browser-smoke.mjs 會在載入前設 window.CAM_API_BASE，
+   * 把請求導到本機起的測試後端，才不會把測試班級寫進正式資料庫。 */
+  var API_BASE = (typeof window !== "undefined" && window.CAM_API_BASE) ||
+    "https://claudebot500.tailfcf67f.ts.net";
   var K_STUDENT = "cam.student";
   var K_TEACHER = "cam.teacher";
   var K_PROFILE = "cam.profile";     /* 學生的班級與姓名，離線時也能顯示 */
