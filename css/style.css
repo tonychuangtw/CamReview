@@ -539,7 +539,10 @@ select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 }
 @keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
 .theme-sheet h3 { margin: 2px 0 12px; letter-spacing: 0.04em; }
-.theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+/* auto-fit 而不是固定三欄：窄螢幕（或使用者放大字級）時自己收成兩欄，
+   不會有第三欄被切在畫面外還點不到——面板是 position:fixed，
+   切出去的部分是捲不到的。 */
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 10px; }
 .theme-swatch {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   background: var(--surface2);

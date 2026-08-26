@@ -1115,6 +1115,10 @@
     });
     initTheme();
     $("brand").addEventListener("click", function () { goto(API.isStudent() ? "student" : (API.isTeacher() ? "teacher" : "role")); });
+    /* 把這份檔案的快取戳顯示出來。Tony 用手機回報問題時，
+       光看畫面分不出他拿到的是修好前還是修好後的版本（GitHub Pages 的
+       HTML 會被快取 10 分鐘），有這個戳就不用猜。 */
+    $("build-stamp").textContent = STAMP;
     $("show-versions").addEventListener("click", function () { paintVersions(); show("view-versions"); });
 
     /* 題庫來源下拉：內容由 pick.js 定義，兩邊才不會走鐘 */
