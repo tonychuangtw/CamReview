@@ -1079,10 +1079,22 @@
     if (meta) meta.setAttribute("content", t.bg);
   }
 
+  /* 字級用固定的級距表，不要用「±10 再夾在 85..175」。
+     後者一旦撞到 85 這個下限就永遠回不到 100：
+     100 → 90 → 80(夾成 85) → 95 → 105 → 115…（Tony 2026-08-26 回報）。
+     列成表就不會有這個問題，而且 100 一定在表上。 */
+  var FS_STEPS = [85, 90, 100, 110, 120, 130, 140, 150, 160, 175];
+
   function currentFS() {
     var n;
     try { n = parseInt(localStorage.getItem(K_FS), 10); } catch (e) { n = NaN; }
-    return (n >= 85 && n <= 175) ? n : 100;
+    if (!(n >= 85 && n <= 175)) return 100;
+    /* 舊資料可能存了不在表上的值（例如上面那個 bug 留下的 95），靠過去最近的一級 */
+    var best = FS_STEPS[0];
+    for (var i = 0; i < FS_STEPS.length; i++) {
+      if (Math.abs(FS_STEPS[i] - n) < Math.abs(best - n)) best = FS_STEPS[i];
+    }
+    return best;
   }
 
   function applyFS(n) {
@@ -1090,6 +1102,15 @@
     document.documentElement.style.fontSize = n + "%";
     try { localStorage.setItem(K_FS, String(n)); } catch (e) {}
     $("fs-val").textContent = n + "%";
+    $("fs-minus").disabled = n <= FS_STEPS[0];
+    $("fs-plus").disabled = n >= FS_STEPS[FS_STEPS.length - 1];
+  }
+
+  /* 沿著級距表移動一格 */
+  function stepFS(dir) {
+    var i = FS_STEPS.indexOf(currentFS());
+    if (i < 0) i = FS_STEPS.indexOf(100);
+    applyFS(FS_STEPS[Math.max(0, Math.min(FS_STEPS.length - 1, i + dir))]);
   }
 
   function initTheme() {
@@ -1122,8 +1143,8 @@
     });
     backdrop.addEventListener("click", close);
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
-    $("fs-minus").addEventListener("click", function () { applyFS(currentFS() - 10); });
-    $("fs-plus").addEventListener("click", function () { applyFS(currentFS() + 10); });
+    $("fs-minus").addEventListener("click", function () { stepFS(-1); });
+    $("fs-plus").addEventListener("click", function () { stepFS(1); });
 
     applyTheme(currentTheme());
     applyFS(currentFS());

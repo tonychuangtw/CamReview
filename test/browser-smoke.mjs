@@ -401,6 +401,29 @@ try {
   check('捲動後標題列仍固定在最上方', st.y > 0 && Math.abs(st.top) <= 1, sticky);
   await js(`window.scrollTo(0, 0)`);
 
+  /* 字級：一路按到最小再一路按回來，必須經過 100%。
+   * 舊的做法是「±10 再夾在 85..175」，撞到下限之後級距就整個偏掉、
+   * 永遠回不到 100（100→90→85→95→105…，Tony 2026-08-26 回報）。 */
+  const fsSeq = await js(`(function () {
+    document.getElementById('theme-sheet').classList.remove('hidden');
+    var minus = document.getElementById('fs-minus'), plus = document.getElementById('fs-plus');
+    var val = document.getElementById('fs-val');
+    var seq = [];
+    for (var i = 0; i < 12; i++) minus.click();       /* 一路壓到最小 */
+    var floor = val.textContent;
+    for (var j = 0; j < 12; j++) { plus.click(); seq.push(val.textContent); }
+    var ceil = val.textContent;
+    for (var k = 0; k < 12; k++) minus.click();
+    document.getElementById('theme-sheet').classList.add('hidden');
+    return JSON.stringify({ floor: floor, ceil: ceil, seq: seq,
+      hits100: seq.indexOf('100%') >= 0, minDisabled: minus.disabled });
+  })()`);
+  const fq = JSON.parse(fsSeq);
+  check('字級一路縮到底再放大，會經過 100%', fq.hits100, fsSeq);
+  check('字級下限是 85%、上限是 175%', fq.floor === '85%' && fq.ceil === '175%', fsSeq);
+  check('到達下限時 A− 會停用', fq.minDisabled === true, fsSeq);
+  await js(`localStorage.removeItem('cam_fontsize'); document.documentElement.style.fontSize='';`);
+
   /* 所有可點的控制項都要 touch-action: manipulation。
    * 沒有這個，iOS 會把連續兩下當成「點兩下放大」——A+ 從 100% 按到 175% 要按 8 下，
    * 一定連著按，第二下整頁就被放大且不會還原（Tony 2026-08-26 回報）。 */
