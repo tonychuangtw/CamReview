@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CamReview — 劍橋英檢課堂版</title>
+  <meta name="description" content="Cambridge exam practice for the classroom — teachers set assignments, students practise, progress syncs across devices.">
+  <link rel="stylesheet" href="css/style.css?v=20260826a">
+</head>
+<body>
+
+<header class="topbar">
+  <button id="brand" class="brand" type="button">CamReview</button>
+  <span id="who" class="who"></span>
+  <button id="logout" class="ghost-btn small hidden" type="button">登出</button>
+</header>
+
+<main id="main">
+
+  <!-- ========== 選擇身分 ========== -->
+  <section id="view-role" class="view">
+    <div class="hero">
+      <h1>CamReview</h1>
+      <p class="lead">劍橋英檢課堂版 · B2 First (FCE)</p>
+    </div>
+    <div class="role-grid">
+      <button class="role-card" data-go="student">
+        <span class="role-emoji">🎒</span>
+        <strong>我是學生</strong>
+        <span class="role-sub">用班級代碼、姓名與座號登入</span>
+      </button>
+      <button class="role-card" data-go="teacher">
+        <span class="role-emoji">🧑‍🏫</span>
+        <strong>我是老師</strong>
+        <span class="role-sub">用 Google 帳號登入，管理班級與作業</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ========== 學生登入 ========== -->
+  <section id="view-student-login" class="view hidden">
+    <div class="card form-card">
+      <h2>Student sign-in</h2>
+      <p class="hint">Ask your teacher for the class code. Your seat number is your account — sign in with the same
+        number on any device and you'll see exactly the same work.</p>
+      <label class="field">Class code
+        <input id="in-code" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+               maxlength="12" placeholder="e.g. K7M2QD">
+      </label>
+      <label class="field">Name
+        <input id="in-name" type="text" autocomplete="name" maxlength="40" placeholder="Your name">
+      </label>
+      <label class="field">Seat number
+        <input id="in-seat" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="e.g. 7">
+      </label>
+      <p id="login-error" class="error-text hidden"></p>
+      <button id="do-login" class="primary-btn" type="button">Sign in</button>
+      <button class="ghost-btn small" type="button" data-go="role">← 回上一頁</button>
+    </div>
+  </section>
+
+  <!-- ========== 學生首頁 ========== -->
+  <section id="view-student-home" class="view hidden">
+    <div class="card">
+      <p class="eyebrow" id="stu-class"></p>
+      <h2 id="stu-name"></h2>
+      <p class="hint" id="stu-sync"></p>
+    </div>
+    <div class="card">
+      <h3>Assignments</h3>
+      <p class="hint">Your teacher hasn't set any assignments yet. They'll appear here as soon as they do.</p>
+    </div>
+    <div class="card">
+      <h3>Free practice</h3>
+      <p class="hint">The FCE practice banks are being connected next — you'll be able to practise here any time,
+        and your progress will follow you to any device.</p>
+    </div>
+  </section>
+
+  <!-- ========== 老師登入 ========== -->
+  <section id="view-teacher-login" class="view hidden">
+    <div class="card form-card">
+      <h2>老師登入</h2>
+      <p class="hint">用 Google 帳號登入。你只會看到自己建立的班級，學生看不到你的任何資料。</p>
+      <div id="gsi-slot"></div>
+      <p id="gsi-note" class="hint"></p>
+      <button class="ghost-btn small" type="button" data-go="role">← 回上一頁</button>
+    </div>
+  </section>
+
+  <!-- ========== 老師：班級列表 ========== -->
+  <section id="view-teacher-home" class="view hidden">
+    <div class="card">
+      <h2>我的班級</h2>
+      <div id="class-list" class="class-list"></div>
+      <div class="row-form">
+        <input id="in-class-name" type="text" maxlength="60" placeholder="班級名稱（例：高二 FCE 班）">
+        <button id="do-create-class" class="primary-btn small" type="button">建立班級</button>
+      </div>
+      <p id="class-error" class="error-text hidden"></p>
+    </div>
+  </section>
+
+  <!-- ========== 老師：單一班級 ========== -->
+  <section id="view-class" class="view hidden">
+    <div class="card">
+      <button class="ghost-btn small" type="button" data-go="teacher-home">← 我的班級</button>
+      <h2 id="cls-name"></h2>
+      <p class="eyebrow">班級代碼</p>
+      <p class="code-big" id="cls-code"></p>
+      <p class="hint">把這組代碼給學生，他們用「代碼＋姓名＋座號」就能登入，不需要帳號密碼。</p>
+      <label class="check">
+        <input id="cls-locked" type="checkbox">
+        鎖定名冊（勾選後，只有名冊上已經有的座號能登入）
+      </label>
+    </div>
+
+    <div class="card">
+      <h3>名冊 <span id="cls-count" class="muted"></span></h3>
+      <div id="roster" class="roster"></div>
+      <details class="bulk">
+        <summary>批次匯入名冊</summary>
+        <p class="hint">一行一位，格式「座號,姓名」。學生之後用同一個座號登入就會接上這一筆。</p>
+        <textarea id="in-bulk" rows="6" placeholder="1,王小明&#10;2,陳小華&#10;3,林小美"></textarea>
+        <button id="do-bulk" class="primary-btn small" type="button">匯入</button>
+      </details>
+      <p id="roster-error" class="error-text hidden"></p>
+    </div>
+
+    <div class="card danger-zone">
+      <button id="do-delete-class" class="danger-btn small" type="button">刪除這個班級</button>
+      <p class="hint">會一併刪除名冊與學生的練習紀錄，無法復原。</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <button id="show-versions" class="link-btn" type="button">ℹ️ 使用說明與版本紀錄</button>
+</footer>
+
+<section id="view-versions" class="view hidden">
+  <div class="card">
+    <button class="ghost-btn small" type="button" data-go="back">← 返回</button>
+    <h2>使用說明</h2>
+    <h3>給老師</h3>
+    <ol class="steps">
+      <li>用 Google 帳號登入，建立一個班級。</li>
+      <li>把系統產生的 <strong>6 碼班級代碼</strong>給全班。</li>
+      <li>學生用「代碼＋姓名＋座號」登入，名冊會自動長出來；也可以先批次匯入名冊。</li>
+      <li>名冊確定之後勾選「鎖定名冊」，就只有名冊上的座號能登入。</li>
+    </ol>
+    <h3>給學生</h3>
+    <ol class="steps">
+      <li>座號就是你的帳號 —— 換一台裝置只要輸入同一組代碼與座號，看到的東西完全一樣。</li>
+      <li>沒有密碼，所以請不要用別人的座號登入。</li>
+    </ol>
+    <h2>版本紀錄</h2>
+    <div id="versions"></div>
+  </div>
+</section>
+
+<script src="js/dialog.js?v=20260826a"></script>
+<script src="js/util.js?v=20260826a"></script>
+<script src="js/versions.js?v=20260826a"></script>
+<script src="js/api.js?v=20260826a"></script>
+<script src="js/app.js?v=20260826a"></script>
+</body>
+</html>
