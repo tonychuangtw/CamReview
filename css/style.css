@@ -261,6 +261,14 @@ main { max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; }
 
 /* ---------- 表單 ---------- */
 .field { display: block; margin: 14px 0; color: var(--text2); font-size: 0.88rem; }
+
+/* ⚠️ 每一個可打字的欄位都必須 ≥16px，這不是美觀問題是版面問題：
+   iOS Safari 只要你點進 font-size 小於 16px 的欄位，就會自動把整頁放大，
+   而且放大後不會自己還原 —— 右邊被切掉、sticky 標題列被推出畫面外，
+   就是 Tony 2026-08-26 傳的那張截圖。
+   標籤文字仍然維持 0.88rem（.field 自己），只有控制項被拉回 16px。
+   用 max() 而不是寫死 16px，字級調到 175% 時才會跟著放大。
+   browser-smoke 有守門，之後誰把欄位字級改小就會測試失敗。 */
 .field input,
 textarea,
 .row-form input {
@@ -556,3 +564,36 @@ select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 }
 .fs-row { display: flex; align-items: center; gap: 12px; }
 #fs-val { min-width: 52px; text-align: center; font-weight: 600; }
+
+
+/* ---------- 可打字的欄位一律 ≥16px ----------
+   ⚠️ 這不是美觀問題，是版面問題：iOS Safari 只要你點進 font-size 小於 16px 的
+   輸入欄位，就會自動把整頁放大，而且放大後不會自己還原——右邊被切掉、
+   sticky 標題列被推出畫面外，就是 Tony 2026-08-26 傳的那張截圖的成因。
+
+   前面那些 `.field input { font: inherit }` 會從 .field 繼承 0.88rem（=14.08px），
+   所以要放在檔尾、用同等或更高的特異性壓過去（含 #view-take 那組 id 選擇器）。
+   標籤文字仍然是 0.88rem，只有控制項被拉回去。
+   用 max() 而不是寫死 16px，字級調到 175% 時控制項才會跟著放大。
+   browser-smoke 有守門，之後誰把欄位字級改小就會測試失敗。 */
+.field input,
+.field select,
+.field textarea,
+.row-form input,
+.row-form select,
+.row-form textarea,
+.bulk textarea,
+.check input[type="text"],
+#view-take textarea,
+#view-take input[type="text"],
+#view-take input,
+input[type="text"],
+input[type="number"],
+input[type="datetime-local"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  font-size: max(16px, 1rem);
+}

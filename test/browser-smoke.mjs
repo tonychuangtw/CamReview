@@ -367,6 +367,24 @@ try {
   const d = JSON.parse(dlg);
   check('Sign out 的對話框浮在畫面內（不是排到頁尾）', d.ok, dlg);
 
+  /* 可打字的欄位一律 ≥16px。iOS Safari 點進小於 16px 的欄位會把整頁放大且不還原，
+   * 結果就是右邊被切掉、sticky 標題列被推出畫面外（Tony 2026-08-26 的截圖）。
+   * checkbox 不算——它不是文字輸入，iOS 不會為它縮放。 */
+  const fonts = await js(`(function () {
+    var ids = ${JSON.stringify(VIEWS)};
+    ids.forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.remove('hidden'); });
+    var bad = [];
+    document.querySelectorAll('input, select, textarea').forEach(function (el) {
+      if (el.type === 'checkbox' || el.type === 'radio') return;
+      var fs = parseFloat(getComputedStyle(el).fontSize);
+      if (fs < 16) bad.push((el.id || el.tagName.toLowerCase()) + '=' + fs.toFixed(1) + 'px');
+    });
+    ids.forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+    return JSON.stringify(bad);
+  })()`);
+  check('所有可打字的欄位都 ≥16px（否則 iOS 會自動放大整頁）',
+    JSON.parse(fonts).length === 0, fonts);
+
   /* 為了不橫向捲動而加的 overflow-x:hidden 有個經典副作用：會讓祖先變成捲動容器，
    * 把 position:sticky 的標題列釘死在原地。捲下去實測一次，確認標題列還跟著。 */
   const sticky = await js(`(function () {

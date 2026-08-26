@@ -7,7 +7,8 @@ window.APP_VERSIONS = [
       "Colours and text size: the \uD83C\uDFA8 button in the top bar offers six colour themes (Ink Black, Deep Navy, Forest Green, Warm Paper, Rose Plum, Celadon) and text size from 85% to 175%. Your choice is remembered on that device.",
       "The Sign out confirmation now appears in the middle of the screen instead of at the very bottom of the page, where it was easy to miss.",
       "Setting an assignment: the question bank row no longer pushes the Add button off the right of the screen on a phone. Every row of controls now wraps neatly instead.",
-      "Layout: every page has been checked at phone width, so nothing runs off the side and there is no more pinching and zooming to read a page."
+      "Layout: every page has been checked at phone width, so nothing runs off the side and there is no more pinching and zooming to read a page.",
+      "Typing in a box no longer zooms the whole page in on an iPhone. Every field you can type into is now at least 16px, which is the size Safari requires before it stops zooming in on you \u2014 and it never zoomed back out, which is why the right-hand side looked cut off."
     ]
   },
   {
