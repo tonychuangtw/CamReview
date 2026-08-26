@@ -4,11 +4,11 @@
 
 STATUS: in-progress
 OBJECTIVE: 做一個 FCE 課堂站——老師建班級、派作業、看全班成績；學生用班級代碼登入練習，跨裝置同步
-NEXT_ACTION: 第三批「老師儀表板」：全班成績總表（誰交了／分數／最常錯的題型）、單一學生的作答明細、CSV 匯出；接著第四批把寫作題接上 K3 批改（後端已有 /api/grade）
+NEXT_ACTION: 四批都完成，等 Tony 實際帶班後的回饋再調整。可以先做的加值項：聽力題型（需 TTS，可沿用 LanExamMock 剛做好的英/美口音切換）、學生的自由練習模式、老師端一鍵複製作業到另一個班
 VALIDATION: node test/test.js 全綠；後端 node test/cam-test.js（在 claude-shared/projects/LanExamMock/backend）全綠；瀏覽器實測老師建班→學生登入→跨裝置看到同一份資料
 BLOCKERS: 無
 PATHS: ~/TelegramClaude/CamReview/（前端）、claude-shared/projects/LanExamMock/backend/cam.js（後端）
-UPDATED: 2026-08-26 12:05 台北
+UPDATED: 2026-08-26 13:30 台北
 
 ## 已完成
 
@@ -55,9 +55,23 @@ LanExamMock 一致）；老師的管理介面用中文，因為那是工具不�
 測試：前端 59 項純邏輯、後端 55 項、瀏覽器 27 項（含「作答頁看不到解析」與完整的
 派題 → 作答 → 自動批改 → 老師看到分數）。
 
+**第三批（2026-08-26）：老師儀表板與 CSV**
+- `/classes/:id/dashboard` 一次算完：每位學生交了幾份與平均正確率、每份作業的交件數與班平均、
+  各題型的整體正確率、全班最容易錯的前 20 題（只統計自動批改的題，寫作不列入）。
+- `/classes/:id/students/:sid/work` 單一學生的逐題作答（含他寫的答案、對錯、正解與寫作全文）。
+- CSV 在前端組（一列一位學生、每份作業一欄）。⚠ 開頭一定要補 BOM，否則老師用 Excel 開，
+  中文姓名會變亂碼——這是這類匯出最常被回報的問題。
+
+**第四批（2026-08-26）：寫作批改**
+- `/assignments/:aid/grade-writing` 呼叫既有的 `gradeEssay`（Kimi K3），依劍橋四項標準給分。
+- ⚠ 速率限制的 key 用「學生 id」而不是預設的 IP —— 全班共用學校的一個對外 IP，
+  用 IP 當 key 會整班一起被鎖。
+- 同一題批改過就存在 `cam_submissions.feedback`，不會重複送（重複送＝重複花錢）。
+- `/classes/:id/submissions/:subId/writing` 讓老師打分數與寫評語，與 AI 批改並存，
+  老師的分數是最終成績。
+- ⚠ smoke test **刻意不按**「取得批改」那顆按鈕——那會真的呼叫 K3 花錢。只驗按鈕有出現。
+
 ## 待辦
 
-- [ ] 第三批：老師儀表板（誰交了／分數／全班最常錯的題型）＋ CSV 匯出
-- [ ] 第四批：計時考試模式（一次性作答、時間到自動收卷）＋ 寫作走 K3 批改
 - [x] `tools/sync-banks.js`：從 LanExamMock 同步 FCE 題庫（加題仍只加在 LanExamMock）
 - [ ] Tony 之後會申請網址：屆時加 `CNAME` 檔，並把新網域加進後端的 `EXTRA_ORIGINS`
